@@ -918,6 +918,22 @@
             display: block;
         }
 
+        /* Lifestyle Site tab panels */
+        .ls-content {
+            display: none;
+        }
+
+        .ls-content.active {
+            display: block;
+        }
+
+        /* Lifestyle Site Settings sub-tab active state */
+        .ls-singleton-tab.active {
+            background: var(--accent, #C9A962);
+            color: #1a1a1a;
+            border-color: var(--accent, #C9A962);
+        }
+
         /* Film Roll Grid */
         .film-roll-grid {
             display: grid;
@@ -3706,6 +3722,8 @@
                     <button class="btn btn-secondary ls-tab" data-lstab="testimonials">Testimonials</button>
                     <button class="btn btn-secondary ls-tab" data-lstab="events">Event Galleries</button>
                     <button class="btn btn-secondary ls-tab" data-lstab="bookings">Bookings</button>
+                    <button class="btn btn-secondary ls-tab" data-lstab="pricing">Pricing</button>
+                    <button class="btn btn-secondary ls-tab" data-lstab="singleton">Site Settings</button>
                 </div>
 
                 <!-- Services -->
@@ -3767,6 +3785,85 @@
                             <thead><tr><th>#</th><th>Name</th><th>Service</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
                             <tbody id="lsBookingsTbody"></tbody>
                         </table>
+                    </div>
+                </div>
+
+                <!-- Pricing -->
+                <div class="ls-content" id="ls-pricing">
+                    <div class="table-header">
+                        <h2>Service Pricing</h2>
+                        <div class="search-box">
+                            <button class="btn btn-secondary btn-sm" onclick="lsLoadPricing()">🔄 Refresh</button>
+                            <button class="btn btn-primary btn-sm" onclick="lsOpenAddPricing()">+ Add Price</button>
+                        </div>
+                    </div>
+                    <div id="lsPricingGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:16px;"></div>
+                </div>
+
+                <!-- Singleton Settings -->
+                <div class="ls-content" id="ls-singleton">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+                        <button class="btn btn-secondary btn-sm ls-singleton-tab active" data-stab="hero" onclick="lsShowSingletonTab('hero')">Hero</button>
+                        <button class="btn btn-secondary btn-sm ls-singleton-tab" data-stab="about" onclick="lsShowSingletonTab('about')">About</button>
+                        <button class="btn btn-secondary btn-sm ls-singleton-tab" data-stab="approach" onclick="lsShowSingletonTab('approach')">Approach</button>
+                        <button class="btn btn-secondary btn-sm ls-singleton-tab" data-stab="contact" onclick="lsShowSingletonTab('contact')">Contact</button>
+                    </div>
+
+                    <!-- Hero settings -->
+                    <div class="ls-singleton-content active" id="ls-s-hero">
+                        <h3 style="margin-bottom:16px;">Hero Section</h3>
+                        <form id="lsHeroForm" onsubmit="lsSaveSingleton(event,'hero')" style="display:grid;gap:12px;max-width:700px;">
+                            <div class="form-group"><label>Tag line (above logo)</label><input type="text" id="lsHeroTag" class="form-input"></div>
+                            <div class="form-group"><label>Headline (supports &lt;em&gt;)</label><input type="text" id="lsHeroHeadline" class="form-input"></div>
+                            <div class="form-group"><label>Tagline (subtitle)</label><textarea id="lsHeroTagline" class="form-input" rows="3"></textarea></div>
+                            <div class="form-group"><label>Primary CTA Label</label><input type="text" id="lsHeroPrimaryLabel" class="form-input"></div>
+                            <div class="form-group"><label>Primary CTA URL</label><input type="text" id="lsHeroPrimaryHref" class="form-input"></div>
+                            <div class="form-group"><label>Secondary CTA Label</label><input type="text" id="lsHeroSecondaryLabel" class="form-input"></div>
+                            <div class="form-group"><label>Secondary CTA URL</label><input type="text" id="lsHeroSecondaryHref" class="form-input"></div>
+                            <button type="submit" class="btn btn-primary" style="width:fit-content;">Save Hero</button>
+                        </form>
+                    </div>
+
+                    <!-- About settings -->
+                    <div class="ls-singleton-content" id="ls-s-about" style="display:none;">
+                        <h3 style="margin-bottom:16px;">About Section</h3>
+                        <form id="lsAboutForm" onsubmit="lsSaveSingleton(event,'about')" style="display:grid;gap:12px;max-width:700px;">
+                            <div class="form-group"><label>Section Label</label><input type="text" id="lsAboutLabel" class="form-input"></div>
+                            <div class="form-group"><label>Headline (supports &lt;em&gt;)</label><input type="text" id="lsAboutHeadline" class="form-input"></div>
+                            <div class="form-group"><label>Paragraphs (one per line)</label><textarea id="lsAboutParagraphs" class="form-input" rows="6" placeholder="One paragraph per line"></textarea></div>
+                            <div class="form-group"><label>Cover Image URL</label><input type="text" id="lsAboutCoverUrl" class="form-input"></div>
+                            <div class="form-group"><label>Cover Image S3 Key</label><input type="text" id="lsAboutCoverKey" class="form-input"></div>
+                            <div class="form-group"><label>Stats (one per line, format: "15+ | Years Experience")</label><textarea id="lsAboutStats" class="form-input" rows="4" placeholder="15+ | Years Experience"></textarea></div>
+                            <button type="submit" class="btn btn-primary" style="width:fit-content;">Save About</button>
+                        </form>
+                    </div>
+
+                    <!-- Approach settings -->
+                    <div class="ls-singleton-content" id="ls-s-approach" style="display:none;">
+                        <h3 style="margin-bottom:16px;">Approach Section</h3>
+                        <form id="lsApproachHeadingForm" onsubmit="lsSaveSingleton(event,'approach')" style="display:grid;gap:12px;max-width:700px;margin-bottom:24px;">
+                            <div class="form-group"><label>Section Label</label><input type="text" id="lsApproachLabel" class="form-input"></div>
+                            <div class="form-group"><label>Section Title (supports &lt;em&gt;)</label><input type="text" id="lsApproachTitle" class="form-input"></div>
+                            <div class="form-group"><label>Subtitle</label><input type="text" id="lsApproachSubtitle" class="form-input"></div>
+                            <button type="submit" class="btn btn-primary" style="width:fit-content;">Save Headings</button>
+                        </form>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <h4>Approach Cards</h4>
+                            <button class="btn btn-primary btn-sm" onclick="lsOpenAddApproachCard()">+ Add Card</button>
+                        </div>
+                        <div id="lsApproachCardsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div>
+                    </div>
+
+                    <!-- Contact settings -->
+                    <div class="ls-singleton-content" id="ls-s-contact" style="display:none;">
+                        <h3 style="margin-bottom:16px;">Contact Details</h3>
+                        <form id="lsContactForm" onsubmit="lsSaveSingleton(event,'contact')" style="display:grid;gap:12px;max-width:700px;">
+                            <div class="form-group"><label>Phone</label><input type="text" id="lsContactPhone" class="form-input"></div>
+                            <div class="form-group"><label>Email</label><input type="email" id="lsContactEmail" class="form-input"></div>
+                            <div class="form-group"><label>Address Line</label><input type="text" id="lsContactAddress" class="form-input"></div>
+                            <div class="form-group"><label>Hours</label><input type="text" id="lsContactHours" class="form-input"></div>
+                            <button type="submit" class="btn btn-primary" style="width:fit-content;">Save Contact</button>
+                        </form>
                     </div>
                 </div>
             </section>
@@ -5119,6 +5216,18 @@
                     <div class="form-group"><label>Cover Image S3 Key</label><input type="text" id="lsServiceCoverKey"></div>
                     <div class="form-group"><label>Sort Order</label><input type="number" id="lsServiceSort" value="0"></div>
                     <div class="form-group"><label><input type="checkbox" id="lsServiceActive" checked> Active</label></div>
+                    <hr style="margin:12px 0;">
+                    <p style="font-size:12px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Detail Page Fields</p>
+                    <div class="form-group"><label>Hero Lede (service page subtitle)</label><input type="text" id="lsServiceHeroLede" class="form-input"></div>
+                    <div class="form-group"><label>Hero Image URL</label><input type="text" id="lsServiceHeroImgUrl" class="form-input"></div>
+                    <div class="form-group"><label>Hero Image S3 Key</label><input type="text" id="lsServiceHeroImgKey" class="form-input"></div>
+                    <div class="form-group"><label>Intro Headline (supports &lt;em&gt;)</label><input type="text" id="lsServiceIntroHeadline" class="form-input"></div>
+                    <div class="form-group"><label>Intro Paragraphs (one per line)</label><textarea id="lsServiceIntroParagraphs" class="form-input" rows="4"></textarea></div>
+                    <div class="form-group"><label>Included Bullets (one per line)</label><textarea id="lsServiceBullets" class="form-input" rows="4"></textarea></div>
+                    <div class="form-group"><label>CTA Headline</label><input type="text" id="lsServiceCtaHeadline" class="form-input"></div>
+                    <div class="form-group"><label>CTA Text</label><input type="text" id="lsServiceCtaText" class="form-input"></div>
+                    <div class="form-group"><label>SEO Title (&lt;title&gt;)</label><input type="text" id="lsServiceSeoTitle" class="form-input"></div>
+                    <div class="form-group"><label>SEO Meta Description</label><textarea id="lsServiceSeoDesc" class="form-input" rows="2"></textarea></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="lsCloseModal('lsServiceModal')">Cancel</button>
@@ -5206,6 +5315,59 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="lsCloseModal('lsEventModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lifestyle: Add/Edit Pricing Modal -->
+    <div class="modal-overlay" id="lsPricingModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="lsPricingModalTitle">Add Pricing</h2>
+                <button class="modal-close" onclick="lsCloseModal('lsPricingModal')">&times;</button>
+            </div>
+            <form id="lsPricingForm" onsubmit="lsSavePricing(event)">
+                <input type="hidden" id="lsPricingId">
+                <div class="modal-body">
+                    <div class="form-group"><label>Service Slug</label><select id="lsPricingSlug"><option value="headshots">headshots</option><option value="family">family</option><option value="sport">sport</option><option value="schools">schools</option><option value="events">events</option><option value="product">product</option><option value="food">food</option><option value="property">property</option></select></div>
+                    <div class="form-group"><label>Package Title</label><input type="text" id="lsPricingTitle" required></div>
+                    <div class="form-group"><label>Tier / Badge (e.g. Half Day, Full Day)</label><input type="text" id="lsPricingTier"></div>
+                    <div class="form-group"><label>Description</label><textarea id="lsPricingDesc" rows="2"></textarea></div>
+                    <div class="form-group"><label>Price (£)</label><input type="number" id="lsPricingPrice" min="0" required></div>
+                    <div class="form-group"><label>Unit (e.g. per shoot, per hour)</label><input type="text" id="lsPricingUnit"></div>
+                    <div class="form-group"><label>Features (one per line)</label><textarea id="lsPricingFeatures" rows="4"></textarea></div>
+                    <div class="form-group"><label>Sort Order</label><input type="number" id="lsPricingSort" value="0"></div>
+                    <div class="form-group" style="display:flex;gap:16px;align-items:center;">
+                        <label><input type="checkbox" id="lsPricingFeatured"> Featured (highlighted)</label>
+                        <label><input type="checkbox" id="lsPricingActive" checked> Active</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="lsCloseModal('lsPricingModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lifestyle: Add/Edit Approach Card Modal -->
+    <div class="modal-overlay" id="lsApproachModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="lsApproachModalTitle">Add Approach Card</h2>
+                <button class="modal-close" onclick="lsCloseModal('lsApproachModal')">&times;</button>
+            </div>
+            <form id="lsApproachForm" onsubmit="lsSaveApproachCard(event)">
+                <input type="hidden" id="lsApproachCardIdx">
+                <div class="modal-body">
+                    <div class="form-group"><label>Card Title</label><input type="text" id="lsApproachCardTitle" required></div>
+                    <div class="form-group"><label>Description</label><textarea id="lsApproachCardDesc" rows="3" required></textarea></div>
+                    <div class="form-group"><label>Sort Order</label><input type="number" id="lsApproachCardSort" value="0"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="lsCloseModal('lsApproachModal')">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </form>
@@ -11488,6 +11650,8 @@
             if (tab === 'services' || tab === 'portfolio' || tab === 'testimonials') return lsLoadContent();
             if (tab === 'events') return lsLoadEvents();
             if (tab === 'bookings') return lsLoadBookings();
+            if (tab === 'pricing') return lsLoadPricing();
+            if (tab === 'singleton') return lsLoadSingleton();
         }
 
         // ----- Content (services + portfolio + testimonials) -----
@@ -11537,6 +11701,16 @@
             document.getElementById('lsServiceCoverKey').value = s.coverImageS3Key || '';
             document.getElementById('lsServiceSort').value = s.sortOrder || 0;
             document.getElementById('lsServiceActive').checked = s.isActive !== false;
+            document.getElementById('lsServiceHeroLede').value = s.heroLede || '';
+            document.getElementById('lsServiceHeroImgUrl').value = s.heroImageUrl || '';
+            document.getElementById('lsServiceHeroImgKey').value = s.heroImageS3Key || '';
+            document.getElementById('lsServiceIntroHeadline').value = s.introHeadline || '';
+            document.getElementById('lsServiceIntroParagraphs').value = (s.introParagraphs || []).join('\n');
+            document.getElementById('lsServiceBullets').value = (s.includedBullets || []).join('\n');
+            document.getElementById('lsServiceCtaHeadline').value = s.ctaHeadline || '';
+            document.getElementById('lsServiceCtaText').value = s.ctaText || '';
+            document.getElementById('lsServiceSeoTitle').value = s.seoTitle || '';
+            document.getElementById('lsServiceSeoDesc').value = s.seoDescription || '';
             document.getElementById('lsServiceModalTitle').textContent = 'Edit Service';
             lsOpenModal('lsServiceModal');
         }
@@ -11551,7 +11725,17 @@
                 coverImageUrl: document.getElementById('lsServiceCoverUrl').value.trim(),
                 coverImageS3Key: document.getElementById('lsServiceCoverKey').value.trim(),
                 sortOrder: parseInt(document.getElementById('lsServiceSort').value) || 0,
-                isActive: document.getElementById('lsServiceActive').checked
+                isActive: document.getElementById('lsServiceActive').checked,
+                heroLede: document.getElementById('lsServiceHeroLede').value.trim(),
+                heroImageUrl: document.getElementById('lsServiceHeroImgUrl').value.trim(),
+                heroImageS3Key: document.getElementById('lsServiceHeroImgKey').value.trim(),
+                introHeadline: document.getElementById('lsServiceIntroHeadline').value.trim(),
+                introParagraphs: document.getElementById('lsServiceIntroParagraphs').value.trim().split('\n').filter(Boolean),
+                includedBullets: document.getElementById('lsServiceBullets').value.trim().split('\n').filter(Boolean),
+                ctaHeadline: document.getElementById('lsServiceCtaHeadline').value.trim(),
+                ctaText: document.getElementById('lsServiceCtaText').value.trim(),
+                seoTitle: document.getElementById('lsServiceSeoTitle').value.trim(),
+                seoDescription: document.getElementById('lsServiceSeoDesc').value.trim()
             };
             const url = id ? `${LS_API}/content/services/entry/${id}` : `${LS_API}/content/services/entry`;
             const r = await lsFetch(url, { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
@@ -11749,6 +11933,233 @@
             if (!confirm('Delete this booking?')) return;
             const r = await lsFetch(`${LS_API}/bookings/${id}`, { method: 'DELETE' });
             if (r.success) { showToast('Deleted', 'success'); lsLoadBookings(); }
+        }
+
+        // ---- SINGLETON (Hero / About / Approach / Contact) ----
+        let lsSingletonData = null;
+
+        async function lsLoadSingleton() {
+            const r = await lsFetch(`${LS_API}/content`);
+            if (!r.success) return;
+            lsSingletonData = r.data;
+            // Hero
+            document.getElementById('lsHeroTag').value = r.data.hero?.tag || '';
+            document.getElementById('lsHeroHeadline').value = r.data.hero?.headline || '';
+            document.getElementById('lsHeroTagline').value = r.data.hero?.tagline || '';
+            document.getElementById('lsHeroPrimaryLabel').value = r.data.hero?.primaryCtaLabel || '';
+            document.getElementById('lsHeroPrimaryHref').value = r.data.hero?.primaryCtaHref || '';
+            document.getElementById('lsHeroSecondaryLabel').value = r.data.hero?.secondaryCtaLabel || '';
+            document.getElementById('lsHeroSecondaryHref').value = r.data.hero?.secondaryCtaHref || '';
+            // About
+            document.getElementById('lsAboutLabel').value = r.data.about?.sectionLabel || '';
+            document.getElementById('lsAboutHeadline').value = r.data.about?.headline || '';
+            document.getElementById('lsAboutParagraphs').value = (r.data.about?.paragraphs || []).join('\n');
+            document.getElementById('lsAboutCoverUrl').value = r.data.about?.coverImageUrl || '';
+            document.getElementById('lsAboutCoverKey').value = r.data.about?.coverImageS3Key || '';
+            document.getElementById('lsAboutStats').value = (r.data.about?.stats || []).map(s => `${s.number} | ${s.label}`).join('\n');
+            // Approach headings
+            document.getElementById('lsApproachLabel').value = r.data.approach?.sectionLabel || '';
+            document.getElementById('lsApproachTitle').value = r.data.approach?.sectionTitle || '';
+            document.getElementById('lsApproachSubtitle').value = r.data.approach?.sectionSubtitle || '';
+            lsRenderApproachCards(r.data.approach?.cards || []);
+            // Contact
+            document.getElementById('lsContactPhone').value = r.data.contact?.phone || '';
+            document.getElementById('lsContactEmail').value = r.data.contact?.email || '';
+            document.getElementById('lsContactAddress').value = r.data.contact?.addressLine || '';
+            document.getElementById('lsContactHours').value = r.data.contact?.hours || '';
+        }
+
+        function lsShowSingletonTab(tab) {
+            document.querySelectorAll('.ls-singleton-tab').forEach(b => { b.classList.remove('active'); });
+            document.querySelectorAll('.ls-singleton-content').forEach(d => { d.style.display = 'none'; });
+            document.querySelector(`.ls-singleton-tab[data-stab="${tab}"]`).classList.add('active');
+            document.getElementById(`ls-s-${tab}`).style.display = '';
+        }
+
+        async function lsSaveSingleton(e, section) {
+            e.preventDefault();
+            let payload = {};
+            if (section === 'hero') {
+                payload = {
+                    tag: document.getElementById('lsHeroTag').value.trim(),
+                    headline: document.getElementById('lsHeroHeadline').value.trim(),
+                    tagline: document.getElementById('lsHeroTagline').value.trim(),
+                    primaryCtaLabel: document.getElementById('lsHeroPrimaryLabel').value.trim(),
+                    primaryCtaHref: document.getElementById('lsHeroPrimaryHref').value.trim(),
+                    secondaryCtaLabel: document.getElementById('lsHeroSecondaryLabel').value.trim(),
+                    secondaryCtaHref: document.getElementById('lsHeroSecondaryHref').value.trim()
+                };
+            } else if (section === 'about') {
+                const rawStats = document.getElementById('lsAboutStats').value.trim().split('\n').filter(Boolean);
+                payload = {
+                    sectionLabel: document.getElementById('lsAboutLabel').value.trim(),
+                    headline: document.getElementById('lsAboutHeadline').value.trim(),
+                    paragraphs: document.getElementById('lsAboutParagraphs').value.trim().split('\n').filter(Boolean),
+                    coverImageUrl: document.getElementById('lsAboutCoverUrl').value.trim(),
+                    coverImageS3Key: document.getElementById('lsAboutCoverKey').value.trim(),
+                    stats: rawStats.map(line => { const [num, ...rest] = line.split('|'); return { number: num.trim(), label: rest.join('|').trim() }; })
+                };
+            } else if (section === 'approach') {
+                payload = {
+                    sectionLabel: document.getElementById('lsApproachLabel').value.trim(),
+                    sectionTitle: document.getElementById('lsApproachTitle').value.trim(),
+                    sectionSubtitle: document.getElementById('lsApproachSubtitle').value.trim()
+                };
+            } else if (section === 'contact') {
+                payload = {
+                    phone: document.getElementById('lsContactPhone').value.trim(),
+                    email: document.getElementById('lsContactEmail').value.trim(),
+                    addressLine: document.getElementById('lsContactAddress').value.trim(),
+                    hours: document.getElementById('lsContactHours').value.trim()
+                };
+            }
+            const r = await lsFetch(`${LS_API}/content/${section}`, { method: 'PUT', body: JSON.stringify(payload) });
+            if (r.success) showToast('Saved', 'success'); else showToast('Save failed', 'error');
+        }
+
+        // Approach cards (stored in approach.cards[] of the singleton)
+        function lsRenderApproachCards(cards) {
+            const grid = document.getElementById('lsApproachCardsGrid');
+            if (!grid) return;
+            if (!cards.length) { grid.innerHTML = '<p style="color:#999;font-size:13px;">No cards yet. Add one above.</p>'; return; }
+            grid.innerHTML = cards.map((c, i) => `
+                <div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:16px;">
+                    <div style="font-weight:600;margin-bottom:6px;">${c.title || '(untitled)'}</div>
+                    <div style="font-size:13px;color:#555;margin-bottom:10px;">${c.description || ''}</div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm btn-secondary" onclick="lsEditApproachCard(${i})">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="lsDeleteApproachCard(${i})">Delete</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function lsOpenAddApproachCard() {
+            document.getElementById('lsApproachForm').reset();
+            document.getElementById('lsApproachCardIdx').value = '';
+            document.getElementById('lsApproachModalTitle').textContent = 'Add Approach Card';
+            lsOpenModal('lsApproachModal');
+        }
+
+        function lsEditApproachCard(idx) {
+            const cards = lsSingletonData?.approach?.cards || [];
+            const c = cards[idx];
+            if (!c) return;
+            document.getElementById('lsApproachCardIdx').value = idx;
+            document.getElementById('lsApproachCardTitle').value = c.title || '';
+            document.getElementById('lsApproachCardDesc').value = c.description || '';
+            document.getElementById('lsApproachCardSort').value = c.sortOrder ?? idx;
+            document.getElementById('lsApproachModalTitle').textContent = 'Edit Approach Card';
+            lsOpenModal('lsApproachModal');
+        }
+
+        async function lsSaveApproachCard(e) {
+            e.preventDefault();
+            const idx = document.getElementById('lsApproachCardIdx').value;
+            const card = {
+                title: document.getElementById('lsApproachCardTitle').value.trim(),
+                description: document.getElementById('lsApproachCardDesc').value.trim(),
+                sortOrder: parseInt(document.getElementById('lsApproachCardSort').value) || 0
+            };
+            const cards = [...(lsSingletonData?.approach?.cards || [])];
+            if (idx === '') cards.push(card); else cards[parseInt(idx)] = card;
+            const r = await lsFetch(`${LS_API}/content/approach`, { method: 'PUT', body: JSON.stringify({ cards }) });
+            if (r.success) {
+                showToast('Saved', 'success');
+                lsCloseModal('lsApproachModal');
+                if (!lsSingletonData.approach) lsSingletonData.approach = {};
+                lsSingletonData.approach.cards = r.data.cards || cards;
+                lsRenderApproachCards(lsSingletonData.approach.cards);
+            } else showToast('Save failed', 'error');
+        }
+
+        async function lsDeleteApproachCard(idx) {
+            if (!confirm('Delete this card?')) return;
+            const cards = (lsSingletonData?.approach?.cards || []).filter((_, i) => i !== idx);
+            const r = await lsFetch(`${LS_API}/content/approach`, { method: 'PUT', body: JSON.stringify({ cards }) });
+            if (r.success) {
+                showToast('Deleted', 'success');
+                if (lsSingletonData.approach) lsSingletonData.approach.cards = r.data.cards || cards;
+                lsRenderApproachCards(lsSingletonData.approach?.cards || cards);
+            } else showToast('Delete failed', 'error');
+        }
+
+        // ---- PRICING ----
+        let lsPricingData = [];
+
+        async function lsLoadPricing() {
+            const grid = document.getElementById('lsPricingGrid');
+            if (!grid) return;
+            grid.innerHTML = '<p style="color:#999;font-size:13px;">Loading…</p>';
+            const r = await lsFetch(`${LS_API}/pricing`);
+            if (!r.success) { grid.innerHTML = '<p style="color:red;">Failed to load</p>'; return; }
+            lsPricingData = r.data || [];
+            if (!lsPricingData.length) { grid.innerHTML = '<p style="color:#999;font-size:13px;">No pricing entries yet.</p>'; return; }
+            grid.innerHTML = lsPricingData.map(p => `
+                <div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:16px;">
+                    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#C9A87C;margin-bottom:4px;">${p.serviceSlug}</div>
+                    <div style="font-weight:600;margin-bottom:4px;">${p.title}${p.tier ? ` <span style="font-size:11px;background:#f3efe8;padding:2px 6px;border-radius:4px;">${p.tier}</span>` : ''}</div>
+                    <div style="font-size:18px;font-weight:700;margin-bottom:6px;">£${p.price}${p.unit ? ` <span style="font-size:12px;font-weight:400;">${p.unit}</span>` : ''}</div>
+                    <div style="font-size:12px;color:#666;margin-bottom:10px;">${(p.features || []).join(' · ')}</div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm btn-secondary" onclick="lsEditPricing('${p._id}')">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="lsDeletePricing('${p._id}')">Delete</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function lsOpenAddPricing() {
+            document.getElementById('lsPricingForm').reset();
+            document.getElementById('lsPricingId').value = '';
+            document.getElementById('lsPricingActive').checked = true;
+            document.getElementById('lsPricingModalTitle').textContent = 'Add Pricing';
+            lsOpenModal('lsPricingModal');
+        }
+
+        function lsEditPricing(id) {
+            const p = lsPricingData.find(x => x._id === id);
+            if (!p) return;
+            document.getElementById('lsPricingId').value = p._id;
+            document.getElementById('lsPricingSlug').value = p.serviceSlug || '';
+            document.getElementById('lsPricingTitle').value = p.title || '';
+            document.getElementById('lsPricingTier').value = p.tier || '';
+            document.getElementById('lsPricingDesc').value = p.description || '';
+            document.getElementById('lsPricingPrice').value = p.price || 0;
+            document.getElementById('lsPricingUnit').value = p.unit || '';
+            document.getElementById('lsPricingFeatures').value = (p.features || []).join('\n');
+            document.getElementById('lsPricingSort').value = p.sortOrder || 0;
+            document.getElementById('lsPricingFeatured').checked = !!p.featured;
+            document.getElementById('lsPricingActive').checked = p.isActive !== false;
+            document.getElementById('lsPricingModalTitle').textContent = 'Edit Pricing';
+            lsOpenModal('lsPricingModal');
+        }
+
+        async function lsSavePricing(e) {
+            e.preventDefault();
+            const id = document.getElementById('lsPricingId').value;
+            const payload = {
+                serviceSlug: document.getElementById('lsPricingSlug').value,
+                title: document.getElementById('lsPricingTitle').value.trim(),
+                tier: document.getElementById('lsPricingTier').value.trim(),
+                description: document.getElementById('lsPricingDesc').value.trim(),
+                price: parseFloat(document.getElementById('lsPricingPrice').value) || 0,
+                unit: document.getElementById('lsPricingUnit').value.trim(),
+                features: document.getElementById('lsPricingFeatures').value.trim().split('\n').filter(Boolean),
+                sortOrder: parseInt(document.getElementById('lsPricingSort').value) || 0,
+                featured: document.getElementById('lsPricingFeatured').checked,
+                isActive: document.getElementById('lsPricingActive').checked
+            };
+            const r = id
+                ? await lsFetch(`${LS_API}/pricing/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
+                : await lsFetch(`${LS_API}/pricing`, { method: 'POST', body: JSON.stringify(payload) });
+            if (r.success) { showToast('Saved', 'success'); lsCloseModal('lsPricingModal'); lsLoadPricing(); }
+            else showToast('Save failed', 'error');
+        }
+
+        async function lsDeletePricing(id) {
+            if (!confirm('Delete this pricing entry?')) return;
+            const r = await lsFetch(`${LS_API}/pricing/${id}`, { method: 'DELETE' });
+            if (r.success) { showToast('Deleted', 'success'); lsLoadPricing(); }
+            else showToast('Delete failed', 'error');
         }
     </script>
 </body>
