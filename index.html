@@ -934,6 +934,54 @@
             border-color: var(--accent, #C9A962);
         }
 
+        /* Lifestyle service modal — two-column form + image uploaders */
+        .ls-form-section {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent, #C9A962);
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            margin: 18px 0 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .ls-form-section:first-child { margin-top: 0; }
+        .ls-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 18px;
+        }
+        .ls-form-grid .ls-col-span { grid-column: 1 / -1; }
+        .ls-uploader {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border: 1px dashed var(--border-subtle);
+            border-radius: 10px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .ls-uploader-preview {
+            width: 110px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+            background: #222;
+        }
+        .ls-uploader-preview-wide { width: 200px; height: 112px; }
+        .ls-uploader-hint {
+            font-size: 12px;
+            color: #888;
+            margin: 8px 0 0;
+            max-width: 360px;
+        }
+        @media (max-width: 640px) {
+            .ls-form-grid { grid-template-columns: 1fr; }
+            .ls-uploader-preview-wide { width: 140px; height: 80px; }
+        }
+
         /* Film Roll Grid */
         .film-roll-grid {
             display: grid;
@@ -3820,8 +3868,21 @@
                             <div class="form-group"><label>Primary CTA URL</label><input type="text" id="lsHeroPrimaryHref" class="form-input"></div>
                             <div class="form-group"><label>Secondary CTA Label</label><input type="text" id="lsHeroSecondaryLabel" class="form-input"></div>
                             <div class="form-group"><label>Secondary CTA URL</label><input type="text" id="lsHeroSecondaryHref" class="form-input"></div>
-                            <button type="submit" class="btn btn-primary" style="width:fit-content;">Save Hero</button>
+                            <button type="submit" class="btn btn-primary" style="width:fit-content;">Save Hero Text</button>
                         </form>
+
+                        <hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;max-width:700px;">
+                        <div style="max-width:700px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                                <h4 style="margin:0;">Hero Background Images</h4>
+                                <label class="btn btn-primary btn-sm" style="cursor:pointer;margin:0;">
+                                    + Upload Image
+                                    <input type="file" accept="image/*" style="display:none;" onchange="lsAddHeroImage(this)">
+                                </label>
+                            </div>
+                            <p style="font-size:12px;color:#888;margin:0 0 12px;">The mosaic behind the hero (12 tiles look best). Drag-free order via the ↑ ↓ buttons.</p>
+                            <div id="lsHeroImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;"></div>
+                        </div>
                     </div>
 
                     <!-- About settings -->
@@ -3831,8 +3892,18 @@
                             <div class="form-group"><label>Section Label</label><input type="text" id="lsAboutLabel" class="form-input"></div>
                             <div class="form-group"><label>Headline (supports &lt;em&gt;)</label><input type="text" id="lsAboutHeadline" class="form-input"></div>
                             <div class="form-group"><label>Paragraphs (one per line)</label><textarea id="lsAboutParagraphs" class="form-input" rows="6" placeholder="One paragraph per line"></textarea></div>
-                            <div class="form-group"><label>Cover Image URL</label><input type="text" id="lsAboutCoverUrl" class="form-input"></div>
-                            <div class="form-group"><label>Cover Image S3 Key</label><input type="text" id="lsAboutCoverKey" class="form-input"></div>
+                            <div class="form-group">
+                                <label>Cover Image</label>
+                                <input type="hidden" id="lsAboutCoverUrl">
+                                <input type="hidden" id="lsAboutCoverKey">
+                                <div style="display:flex;align-items:center;gap:12px;">
+                                    <img id="lsAboutCoverPreview" src="" style="display:none;width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #e0e0e0;">
+                                    <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
+                                        Upload Image
+                                        <input type="file" accept="image/*" style="display:none;" onchange="lsUploadSingle(this,'lsAboutCoverKey','lsAboutCoverPreview','about','lsAboutCoverUrl')">
+                                    </label>
+                                </div>
+                            </div>
                             <div class="form-group"><label>Stats (one per line, format: "15+ | Years Experience")</label><textarea id="lsAboutStats" class="form-input" rows="4" placeholder="15+ | Years Experience"></textarea></div>
                             <button type="submit" class="btn btn-primary" style="width:fit-content;">Save About</button>
                         </form>
@@ -5200,38 +5271,112 @@
 
     <!-- Lifestyle: Add Service Modal -->
     <div class="modal-overlay" id="lsServiceModal">
-        <div class="modal">
+        <div class="modal" style="max-width:940px;">
             <div class="modal-header">
                 <h2 id="lsServiceModalTitle">Add Lifestyle Service</h2>
                 <button class="modal-close" onclick="lsCloseModal('lsServiceModal')">&times;</button>
             </div>
             <form id="lsServiceForm" onsubmit="lsSaveService(event)">
                 <input type="hidden" id="lsServiceId">
+                <input type="hidden" id="lsServiceCoverUrl">
+                <input type="hidden" id="lsServiceCoverKey">
+                <input type="hidden" id="lsServiceHeroImgUrl">
+                <input type="hidden" id="lsServiceHeroImgKey">
                 <div class="modal-body">
-                    <div class="form-group"><label>Slug *</label><input type="text" id="lsServiceSlug" placeholder="e.g. headshots" required></div>
-                    <div class="form-group"><label>Title *</label><input type="text" id="lsServiceTitle" required></div>
-                    <div class="form-group"><label>Tag</label><input type="text" id="lsServiceTag" placeholder="e.g. CORPORATE"></div>
-                    <div class="form-group"><label>Description</label><textarea id="lsServiceDesc" rows="3"></textarea></div>
-                    <div class="form-group"><label>Cover Image URL</label><input type="text" id="lsServiceCoverUrl" placeholder="https://..."></div>
-                    <div class="form-group"><label>Cover Image S3 Key</label><input type="text" id="lsServiceCoverKey"></div>
-                    <div class="form-group"><label>Sort Order</label><input type="number" id="lsServiceSort" value="0"></div>
-                    <div class="form-group"><label><input type="checkbox" id="lsServiceActive" checked> Active</label></div>
-                    <hr style="margin:12px 0;">
-                    <p style="font-size:12px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Detail Page Fields</p>
-                    <div class="form-group"><label>Hero Lede (service page subtitle)</label><input type="text" id="lsServiceHeroLede" class="form-input"></div>
-                    <div class="form-group"><label>Hero Image URL</label><input type="text" id="lsServiceHeroImgUrl" class="form-input"></div>
-                    <div class="form-group"><label>Hero Image S3 Key</label><input type="text" id="lsServiceHeroImgKey" class="form-input"></div>
-                    <div class="form-group"><label>Intro Headline (supports &lt;em&gt;)</label><input type="text" id="lsServiceIntroHeadline" class="form-input"></div>
-                    <div class="form-group"><label>Intro Paragraphs (one per line)</label><textarea id="lsServiceIntroParagraphs" class="form-input" rows="4"></textarea></div>
-                    <div class="form-group"><label>Included Bullets (one per line)</label><textarea id="lsServiceBullets" class="form-input" rows="4"></textarea></div>
-                    <div class="form-group"><label>CTA Headline</label><input type="text" id="lsServiceCtaHeadline" class="form-input"></div>
-                    <div class="form-group"><label>CTA Text</label><input type="text" id="lsServiceCtaText" class="form-input"></div>
-                    <div class="form-group"><label>SEO Title (&lt;title&gt;)</label><input type="text" id="lsServiceSeoTitle" class="form-input"></div>
-                    <div class="form-group"><label>SEO Meta Description</label><textarea id="lsServiceSeoDesc" class="form-input" rows="2"></textarea></div>
+
+                    <p class="ls-form-section">Service Card</p>
+                    <div class="ls-form-grid">
+                        <div class="form-group"><label>Slug *</label><input type="text" id="lsServiceSlug" placeholder="e.g. headshots" required></div>
+                        <div class="form-group"><label>Title *</label><input type="text" id="lsServiceTitle" required></div>
+                        <div class="form-group"><label>Tag</label><input type="text" id="lsServiceTag" placeholder="e.g. 01 · Corporate"></div>
+                        <div class="form-group"><label>Sort Order</label><input type="number" id="lsServiceSort" value="0"></div>
+                        <div class="form-group ls-col-span"><label>Description (card text)</label><textarea id="lsServiceDesc" rows="2"></textarea></div>
+                        <div class="form-group ls-col-span">
+                            <label>Card / Cover Image</label>
+                            <div class="ls-uploader">
+                                <img id="lsServiceCoverPreview" src="" class="ls-uploader-preview" style="display:none;">
+                                <div>
+                                    <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">Upload Image
+                                        <input type="file" accept="image/*" style="display:none;" onchange="lsUploadSingle(this,'lsServiceCoverKey','lsServiceCoverPreview','services','lsServiceCoverUrl')">
+                                    </label>
+                                    <p class="ls-uploader-hint">Shown on the landing-page service card. Auto-compressed on upload.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="lsServiceActive" checked style="width:auto;"> Active (visible on site)</label></div>
+                    </div>
+
+                    <p class="ls-form-section">Detail Page</p>
+                    <div class="ls-form-grid">
+                        <div class="form-group ls-col-span"><label>Hero Lede (service page subtitle)</label><input type="text" id="lsServiceHeroLede" class="form-input"></div>
+                        <div class="form-group ls-col-span">
+                            <label>Hero Image (service page banner)</label>
+                            <div class="ls-uploader">
+                                <img id="lsServiceHeroPreview" src="" class="ls-uploader-preview ls-uploader-preview-wide" style="display:none;">
+                                <div>
+                                    <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">Upload Image
+                                        <input type="file" accept="image/*" style="display:none;" onchange="lsUploadSingle(this,'lsServiceHeroImgKey','lsServiceHeroPreview','services','lsServiceHeroImgUrl')">
+                                    </label>
+                                    <p class="ls-uploader-hint">Full-width banner at the top of the service page. Auto-compressed on upload.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group ls-col-span"><label>Intro Headline (supports &lt;em&gt;)</label><input type="text" id="lsServiceIntroHeadline" class="form-input"></div>
+                        <div class="form-group"><label>Intro Paragraphs (one per line)</label><textarea id="lsServiceIntroParagraphs" class="form-input" rows="5"></textarea></div>
+                        <div class="form-group"><label>Included Bullets (one per line)</label><textarea id="lsServiceBullets" class="form-input" rows="5"></textarea></div>
+                        <div class="form-group"><label>CTA Headline</label><input type="text" id="lsServiceCtaHeadline" class="form-input"></div>
+                        <div class="form-group"><label>CTA Text</label><input type="text" id="lsServiceCtaText" class="form-input"></div>
+                        <div class="form-group"><label>SEO Title (&lt;title&gt;)</label><input type="text" id="lsServiceSeoTitle" class="form-input"></div>
+                        <div class="form-group"><label>SEO Meta Description</label><textarea id="lsServiceSeoDesc" class="form-input" rows="2"></textarea></div>
+                        <div class="form-group ls-col-span">
+                            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="lsServiceShowPricing" checked style="width:auto;"> Show “Choose Your Package” pricing section on this service page</label>
+                            <p class="ls-uploader-hint" style="max-width:none;">Manage the actual price packages in the <strong>Pricing</strong> tab (matched by slug). The section only appears when this is on <em>and</em> at least one active package exists for this slug.</p>
+                        </div>
+                    </div>
+
+                    <div id="lsServiceGalleryWrap">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px;">
+                            <p class="ls-form-section" style="margin:0;">Detail-Page Gallery</p>
+                            <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">+ Upload Images
+                                <input type="file" accept="image/*" multiple style="display:none;" onchange="lsAddServiceGalleryImage(this)">
+                            </label>
+                        </div>
+                        <div id="lsServiceGalleryProgress" style="display:none;margin-bottom:10px;">
+                            <div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:4px;">
+                                <span id="lsGalleryProgressLabel">Uploading…</span>
+                                <span id="lsGalleryProgressCount"></span>
+                            </div>
+                            <div style="height:6px;border-radius:4px;background:var(--border-subtle);overflow:hidden;">
+                                <div id="lsGalleryProgressBar" style="height:100%;width:0;background:var(--accent,#C9A962);transition:width .25s ease;"></div>
+                            </div>
+                        </div>
+                        <div id="lsServiceGalleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;"></div>
+                        <p id="lsServiceGalleryHint" style="font-size:12px;color:#888;margin:8px 0 0;display:none;">Save the service first, then re-open it to add gallery images.</p>
+                    </div>
+
+                    <div id="lsServiceDownloadWrap">
+                        <p class="ls-form-section" style="margin:18px 0 4px;">Download Your Gallery</p>
+                        <p class="ls-uploader-hint" style="max-width:none;margin:0 0 12px;">Each item shows an image with a title; clicking the image opens the download link you paste. Image is uploaded &amp; compressed; the link is pasted (e.g. a Google Drive / WeTransfer / Dropbox URL).</p>
+                        <div id="lsServiceDownloadAdd" class="ls-uploader" style="align-items:flex-start;flex-wrap:wrap;">
+                            <img id="lsDownloadPreview" src="" class="ls-uploader-preview" style="display:none;">
+                            <input type="hidden" id="lsDownloadImgUrl">
+                            <input type="hidden" id="lsDownloadImgKey">
+                            <div style="flex:1;min-width:220px;display:grid;gap:8px;">
+                                <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;width:fit-content;">Upload Image
+                                    <input type="file" accept="image/*" style="display:none;" onchange="lsUploadSingle(this,'lsDownloadImgKey','lsDownloadPreview','services/downloads','lsDownloadImgUrl')">
+                                </label>
+                                <input type="text" id="lsDownloadTitle" class="form-input" placeholder="Title (e.g. Wedding Highlights)">
+                                <input type="text" id="lsDownloadLink" class="form-input" placeholder="Download link (https://…)">
+                                <button type="button" class="btn btn-primary btn-sm" style="width:fit-content;" onclick="lsAddServiceDownload()">+ Add Download Item</button>
+                            </div>
+                        </div>
+                        <div id="lsServiceDownloadGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px;"></div>
+                        <p id="lsServiceDownloadHint" style="font-size:12px;color:#888;margin:8px 0 0;display:none;">Save the service first, then re-open it to add download items.</p>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="lsCloseModal('lsServiceModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="submit" class="btn btn-primary">Save Service</button>
                 </div>
             </form>
         </div>
@@ -5247,8 +5392,18 @@
             <form id="lsPortfolioForm" onsubmit="lsSavePortfolio(event)">
                 <input type="hidden" id="lsPortfolioId">
                 <div class="modal-body">
-                    <div class="form-group"><label>Image URL *</label><input type="text" id="lsPortfolioUrl" required></div>
-                    <div class="form-group"><label>S3 Key *</label><input type="text" id="lsPortfolioKey" required></div>
+                    <div class="form-group">
+                        <label>Image *</label>
+                        <input type="hidden" id="lsPortfolioUrl">
+                        <input type="hidden" id="lsPortfolioKey">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <img id="lsPortfolioPreview" src="" style="display:none;width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #e0e0e0;">
+                            <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
+                                Upload Image
+                                <input type="file" accept="image/*" style="display:none;" onchange="lsUploadSingle(this,'lsPortfolioKey','lsPortfolioPreview','portfolio','lsPortfolioUrl')">
+                            </label>
+                        </div>
+                    </div>
                     <div class="form-group"><label>Label</label><input type="text" id="lsPortfolioLabel"></div>
                     <div class="form-group"><label>Service Slug</label><input type="text" id="lsPortfolioServiceSlug"></div>
                     <div class="form-group"><label>Layout</label>
@@ -5309,8 +5464,18 @@
                     <div class="form-group"><label>Event Date</label><input type="date" id="lsEventDate"></div>
                     <div class="form-group"><label>Location</label><input type="text" id="lsEventLocation"></div>
                     <div class="form-group"><label>Description</label><textarea id="lsEventDesc" rows="2"></textarea></div>
-                    <div class="form-group"><label>Cover Image URL</label><input type="text" id="lsEventCoverUrl"></div>
-                    <div class="form-group"><label>Cover Image S3 Key</label><input type="text" id="lsEventCoverKey"></div>
+                    <div class="form-group">
+                        <label>Cover Image</label>
+                        <input type="hidden" id="lsEventCoverUrl">
+                        <input type="hidden" id="lsEventCoverKey">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <img id="lsEventCoverPreview" src="" style="display:none;width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #e0e0e0;">
+                            <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
+                                Upload Image
+                                <input type="file" accept="image/*" style="display:none;" onchange="lsUploadSingle(this,'lsEventCoverKey','lsEventCoverPreview','events','lsEventCoverUrl')">
+                            </label>
+                        </div>
+                    </div>
                     <div class="form-group"><label><input type="checkbox" id="lsEventPublished"> Published</label></div>
                 </div>
                 <div class="modal-footer">
@@ -11620,6 +11785,46 @@
         const LS_API = `${BACKEND_URL}/api/admin/lifestyle`;
         let _lsContent = null;
 
+        // ----- Reusable S3 image uploader -----
+        // Compresses (same as the landing-page uploads: resize to a max width and
+        // re-encode as JPEG @0.85 — visually lossless but much smaller) then uploads
+        // to S3 and returns its key (imageUrl is re-signed at read-time).
+        const LS_IMG_MAX_WIDTH = 1920;
+        const LS_IMG_QUALITY = 0.85;
+        async function lsUploadImage(file, prefix) {
+            const compressed = await compressImage(file, LS_IMG_MAX_WIDTH, LS_IMG_QUALITY);
+            const sig = await lsFetch(`${API_BASE}/s3/upload-url`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    folder: 'website',
+                    filename: file.name,
+                    mimeType: compressed.type || file.type,
+                    fileSize: compressed.size,
+                    prefix: 'lifestyle/' + prefix
+                })
+            });
+            if (!sig.success) { showToast(sig.error || 'Could not start upload', 'error'); return null; }
+            const put = await fetch(sig.uploadUrl, { method: 'PUT', body: compressed, headers: { 'Content-Type': compressed.type || file.type } });
+            if (!put.ok) { showToast('Upload to storage failed', 'error'); return null; }
+            return sig.key;
+        }
+
+        // Handles a single-image <input type=file>: uploads, fills a hidden key field
+        // (and optional url field, cleared so the new S3 image wins) and shows a preview.
+        async function lsUploadSingle(inputEl, keyFieldId, previewId, prefix, urlFieldId) {
+            const file = inputEl.files && inputEl.files[0];
+            if (!file) return;
+            showToast('Uploading image…', 'info');
+            const key = await lsUploadImage(file, prefix);
+            inputEl.value = '';
+            if (!key) return;
+            document.getElementById(keyFieldId).value = key;
+            if (urlFieldId) document.getElementById(urlFieldId).value = '';
+            const prev = document.getElementById(previewId);
+            if (prev) { prev.src = URL.createObjectURL(file); prev.style.display = 'block'; }
+            showToast('Image uploaded', 'success');
+        }
+
         async function lsFetch(url, opts = {}) {
             const res = await fetch(url, {
                 ...opts,
@@ -11684,11 +11889,31 @@
             `).join('');
         }
 
+        function lsSetPreview(previewId, url) {
+            const el = document.getElementById(previewId);
+            if (!el) return;
+            if (url) { el.src = url; el.style.display = 'block'; } else { el.src = ''; el.style.display = 'none'; }
+        }
+
         function lsOpenAddService() {
             document.getElementById('lsServiceForm').reset();
             document.getElementById('lsServiceId').value = '';
+            document.getElementById('lsServiceCoverUrl').value = '';
+            document.getElementById('lsServiceCoverKey').value = '';
+            document.getElementById('lsServiceHeroImgUrl').value = '';
+            document.getElementById('lsServiceHeroImgKey').value = '';
+            lsSetPreview('lsServiceCoverPreview', '');
+            lsSetPreview('lsServiceHeroPreview', '');
             document.getElementById('lsServiceModalTitle').textContent = 'Add Lifestyle Service';
             document.getElementById('lsServiceActive').checked = true;
+            document.getElementById('lsServiceShowPricing').checked = true;
+            lsRenderServiceGallery([]);
+            lsRenderServiceDownloads([]);
+            lsResetDownloadForm();
+            document.getElementById('lsServiceModal').dataset.editing = '';
+            document.getElementById('lsServiceGalleryHint').style.display = 'block';
+            document.getElementById('lsServiceDownloadHint').style.display = 'block';
+            document.getElementById('lsServiceDownloadAdd').style.display = 'none';
             lsOpenModal('lsServiceModal');
         }
         function lsEditService(s) {
@@ -11701,6 +11926,7 @@
             document.getElementById('lsServiceCoverKey').value = s.coverImageS3Key || '';
             document.getElementById('lsServiceSort').value = s.sortOrder || 0;
             document.getElementById('lsServiceActive').checked = s.isActive !== false;
+            document.getElementById('lsServiceShowPricing').checked = s.showPricing !== false;
             document.getElementById('lsServiceHeroLede').value = s.heroLede || '';
             document.getElementById('lsServiceHeroImgUrl').value = s.heroImageUrl || '';
             document.getElementById('lsServiceHeroImgKey').value = s.heroImageS3Key || '';
@@ -11711,8 +11937,137 @@
             document.getElementById('lsServiceCtaText').value = s.ctaText || '';
             document.getElementById('lsServiceSeoTitle').value = s.seoTitle || '';
             document.getElementById('lsServiceSeoDesc').value = s.seoDescription || '';
+            lsSetPreview('lsServiceCoverPreview', s.coverImageUrl || '');
+            lsSetPreview('lsServiceHeroPreview', s.heroImageUrl || '');
+            lsRenderServiceGallery(s.galleryImages || []);
+            lsResetDownloadForm();
+            lsRenderServiceDownloads(s.downloadGallery || []);
+            document.getElementById('lsServiceGalleryHint').style.display = 'none';
+            document.getElementById('lsServiceDownloadHint').style.display = 'none';
+            document.getElementById('lsServiceDownloadAdd').style.display = 'flex';
             document.getElementById('lsServiceModalTitle').textContent = 'Edit Service';
             lsOpenModal('lsServiceModal');
+        }
+
+        // ----- Service detail-page gallery (galleryImages[]) -----
+        function lsRenderServiceGallery(imgs) {
+            const grid = document.getElementById('lsServiceGalleryGrid');
+            if (!grid) return;
+            if (!imgs.length) { grid.innerHTML = '<p style="grid-column:1/-1;color:#999;font-size:12px;margin:0;">No gallery images yet.</p>'; return; }
+            grid.innerHTML = imgs.map(im => `
+                <div style="position:relative;border-radius:6px;overflow:hidden;background:#f0f0f0;aspect-ratio:1/1;">
+                    <img src="${im.imageUrl || ''}" style="width:100%;height:100%;object-fit:cover;">
+                    <button type="button" class="btn btn-sm btn-danger" style="position:absolute;top:4px;right:4px;padding:2px 7px;" onclick="lsDeleteServiceGalleryImage('${im._id}')">×</button>
+                </div>`).join('');
+        }
+        function lsSetGalleryProgress(done, total, label) {
+            const wrap = document.getElementById('lsServiceGalleryProgress');
+            if (!wrap) return;
+            if (total <= 0) { wrap.style.display = 'none'; return; }
+            wrap.style.display = 'block';
+            document.getElementById('lsGalleryProgressLabel').textContent = label || 'Uploading…';
+            document.getElementById('lsGalleryProgressCount').textContent = `${done} / ${total}`;
+            document.getElementById('lsGalleryProgressBar').style.width = Math.round((done / total) * 100) + '%';
+        }
+
+        async function lsAddServiceGalleryImage(inputEl) {
+            const id = document.getElementById('lsServiceId').value;
+            const files = Array.from(inputEl.files || []);
+            if (!files.length) return;
+            if (!id) { showToast('Save the service first, then add gallery images', 'info'); inputEl.value = ''; return; }
+            inputEl.value = '';
+            inputEl.disabled = true;
+
+            const total = files.length;
+            const images = [];
+            let failed = 0;
+            lsSetGalleryProgress(0, total, `Uploading image 1 of ${total}…`);
+            for (let i = 0; i < total; i++) {
+                lsSetGalleryProgress(i, total, `Uploading image ${i + 1} of ${total}…`);
+                const key = await lsUploadImage(files[i], 'services/gallery');
+                if (key) images.push({ imageUrl: '', s3Key: key }); else failed++;
+                lsSetGalleryProgress(i + 1, total, `Uploading image ${i + 1} of ${total}…`);
+            }
+            inputEl.disabled = false;
+
+            if (images.length) {
+                lsSetGalleryProgress(total, total, 'Saving…');
+                const r = await lsFetch(`${LS_API}/content/services/${id}/gallery`, {
+                    method: 'POST', body: JSON.stringify({ images })
+                });
+                if (r.success) {
+                    showToast(`${images.length} image${images.length > 1 ? 's' : ''} added${failed ? `, ${failed} failed` : ''}`, failed ? 'info' : 'success');
+                    await lsRefreshServiceGallery(id);
+                } else showToast(r.error || 'Failed to save gallery', 'error');
+            } else {
+                showToast('No images uploaded', 'error');
+            }
+            lsSetGalleryProgress(0, 0);
+        }
+        async function lsDeleteServiceGalleryImage(imageId) {
+            const id = document.getElementById('lsServiceId').value;
+            if (!id || !confirm('Remove this gallery image?')) return;
+            const r = await lsFetch(`${LS_API}/content/services/${id}/gallery/${imageId}`, { method: 'DELETE' });
+            if (r.success) { showToast('Removed', 'success'); await lsRefreshServiceGallery(id); }
+        }
+        // Reload content so the modal gallery shows freshly-signed preview URLs
+        async function lsRefreshServiceGallery(id) {
+            await lsLoadContent();
+            const entry = (_lsContent?.services?.entries || []).find(e => e._id === id);
+            lsRenderServiceGallery(entry?.galleryImages || []);
+        }
+
+        // ----- Service "Download Your Gallery" items (image + title + pasted link) -----
+        function lsRenderServiceDownloads(items) {
+            const grid = document.getElementById('lsServiceDownloadGrid');
+            if (!grid) return;
+            if (!items.length) { grid.innerHTML = '<p style="grid-column:1/-1;color:#999;font-size:12px;margin:0;">No download items yet.</p>'; return; }
+            grid.innerHTML = items.map(it => `
+                <div style="position:relative;border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden;background:#1a1a1a;">
+                    <a href="${it.downloadUrl || '#'}" target="_blank" rel="noopener" title="${it.downloadUrl || ''}">
+                        <img src="${it.imageUrl || ''}" style="width:100%;height:110px;object-fit:cover;display:block;">
+                    </a>
+                    <div style="padding:8px;">
+                        <div style="font-size:13px;font-weight:600;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.title || '(untitled)'}</div>
+                        <div style="font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.downloadUrl || 'no link'}</div>
+                        <button type="button" class="btn btn-sm btn-danger" style="margin-top:6px;padding:2px 8px;" onclick="lsDeleteServiceDownload('${it._id}')">Delete</button>
+                    </div>
+                </div>`).join('');
+        }
+        function lsResetDownloadForm() {
+            document.getElementById('lsDownloadImgUrl').value = '';
+            document.getElementById('lsDownloadImgKey').value = '';
+            document.getElementById('lsDownloadTitle').value = '';
+            document.getElementById('lsDownloadLink').value = '';
+            lsSetPreview('lsDownloadPreview', '');
+        }
+        async function lsAddServiceDownload() {
+            const id = document.getElementById('lsServiceId').value;
+            if (!id) { showToast('Save the service first, then add download items', 'info'); return; }
+            const title = document.getElementById('lsDownloadTitle').value.trim();
+            const downloadUrl = document.getElementById('lsDownloadLink').value.trim();
+            const s3Key = document.getElementById('lsDownloadImgKey').value.trim();
+            if (!s3Key) return showToast('Please upload an image', 'error');
+            if (!downloadUrl) return showToast('Please paste a download link', 'error');
+            const r = await lsFetch(`${LS_API}/content/services/${id}/downloads`, {
+                method: 'POST', body: JSON.stringify({ title, downloadUrl, imageUrl: '', s3Key })
+            });
+            if (r.success) {
+                showToast('Download item added', 'success');
+                lsResetDownloadForm();
+                await lsRefreshServiceDownloads(id);
+            } else showToast(r.error || 'Failed', 'error');
+        }
+        async function lsDeleteServiceDownload(itemId) {
+            const id = document.getElementById('lsServiceId').value;
+            if (!id || !confirm('Remove this download item?')) return;
+            const r = await lsFetch(`${LS_API}/content/services/${id}/downloads/${itemId}`, { method: 'DELETE' });
+            if (r.success) { showToast('Removed', 'success'); await lsRefreshServiceDownloads(id); }
+        }
+        async function lsRefreshServiceDownloads(id) {
+            await lsLoadContent();
+            const entry = (_lsContent?.services?.entries || []).find(e => e._id === id);
+            lsRenderServiceDownloads(entry?.downloadGallery || []);
         }
         async function lsSaveService(e) {
             e.preventDefault();
@@ -11726,6 +12081,7 @@
                 coverImageS3Key: document.getElementById('lsServiceCoverKey').value.trim(),
                 sortOrder: parseInt(document.getElementById('lsServiceSort').value) || 0,
                 isActive: document.getElementById('lsServiceActive').checked,
+                showPricing: document.getElementById('lsServiceShowPricing').checked,
                 heroLede: document.getElementById('lsServiceHeroLede').value.trim(),
                 heroImageUrl: document.getElementById('lsServiceHeroImgUrl').value.trim(),
                 heroImageS3Key: document.getElementById('lsServiceHeroImgKey').value.trim(),
@@ -11764,11 +12120,17 @@
         function lsOpenAddPortfolio() {
             document.getElementById('lsPortfolioForm').reset();
             document.getElementById('lsPortfolioId').value = '';
+            document.getElementById('lsPortfolioUrl').value = '';
+            document.getElementById('lsPortfolioKey').value = '';
+            lsSetPreview('lsPortfolioPreview', '');
             lsOpenModal('lsPortfolioModal');
         }
         async function lsSavePortfolio(e) {
             e.preventDefault();
             const id = document.getElementById('lsPortfolioId').value;
+            if (!document.getElementById('lsPortfolioKey').value.trim() && !document.getElementById('lsPortfolioUrl').value.trim()) {
+                return showToast('Please upload an image first', 'error');
+            }
             const body = {
                 imageUrl: document.getElementById('lsPortfolioUrl').value.trim(),
                 s3Key: document.getElementById('lsPortfolioKey').value.trim(),
@@ -11857,6 +12219,9 @@
         function lsOpenAddEvent() {
             document.getElementById('lsEventForm').reset();
             document.getElementById('lsEventId').value = '';
+            document.getElementById('lsEventCoverUrl').value = '';
+            document.getElementById('lsEventCoverKey').value = '';
+            lsSetPreview('lsEventCoverPreview', '');
             document.getElementById('lsEventModalTitle').textContent = 'New Event Gallery';
             lsOpenModal('lsEventModal');
         }
@@ -11871,6 +12236,7 @@
             document.getElementById('lsEventDesc').value = e.description || '';
             document.getElementById('lsEventCoverUrl').value = e.coverImageUrl || '';
             document.getElementById('lsEventCoverKey').value = e.coverImageS3Key || '';
+            lsSetPreview('lsEventCoverPreview', e.coverImageUrl || '');
             document.getElementById('lsEventPublished').checked = !!e.isPublished;
             document.getElementById('lsEventModalTitle').textContent = 'Edit Event Gallery';
             lsOpenModal('lsEventModal');
@@ -11950,12 +12316,16 @@
             document.getElementById('lsHeroPrimaryHref').value = r.data.hero?.primaryCtaHref || '';
             document.getElementById('lsHeroSecondaryLabel').value = r.data.hero?.secondaryCtaLabel || '';
             document.getElementById('lsHeroSecondaryHref').value = r.data.hero?.secondaryCtaHref || '';
+            lsRenderHeroImages();
             // About
             document.getElementById('lsAboutLabel').value = r.data.about?.sectionLabel || '';
             document.getElementById('lsAboutHeadline').value = r.data.about?.headline || '';
             document.getElementById('lsAboutParagraphs').value = (r.data.about?.paragraphs || []).join('\n');
             document.getElementById('lsAboutCoverUrl').value = r.data.about?.coverImageUrl || '';
             document.getElementById('lsAboutCoverKey').value = r.data.about?.coverImageS3Key || '';
+            const aboutPrev = document.getElementById('lsAboutCoverPreview');
+            if (r.data.about?.coverImageUrl) { aboutPrev.src = r.data.about.coverImageUrl; aboutPrev.style.display = 'block'; }
+            else { aboutPrev.style.display = 'none'; }
             document.getElementById('lsAboutStats').value = (r.data.about?.stats || []).map(s => `${s.number} | ${s.label}`).join('\n');
             // Approach headings
             document.getElementById('lsApproachLabel').value = r.data.approach?.sectionLabel || '';
@@ -12015,6 +12385,66 @@
             }
             const r = await lsFetch(`${LS_API}/content/${section}`, { method: 'PUT', body: JSON.stringify(payload) });
             if (r.success) showToast('Saved', 'success'); else showToast('Save failed', 'error');
+        }
+
+        // ----- Hero background images (stored in hero.backgroundImages[]) -----
+        function lsRenderHeroImages() {
+            const grid = document.getElementById('lsHeroImagesGrid');
+            if (!grid) return;
+            const imgs = (lsSingletonData?.hero?.backgroundImages || []);
+            if (!imgs.length) { grid.innerHTML = '<p style="grid-column:1/-1;color:#999;font-size:13px;">No images yet. Upload one above.</p>'; return; }
+            grid.innerHTML = imgs.map((im, i) => `
+                <div style="position:relative;border-radius:6px;overflow:hidden;background:#f0f0f0;aspect-ratio:1/1;">
+                    <img src="${im.imageUrl || ''}" style="width:100%;height:100%;object-fit:cover;" alt="${im.altText || ''}">
+                    <div style="position:absolute;top:4px;right:4px;display:flex;gap:4px;">
+                        <button class="btn btn-sm btn-secondary" title="Move up" style="padding:2px 7px;" onclick="lsMoveHeroImage(${i},-1)" ${i===0?'disabled':''}>↑</button>
+                        <button class="btn btn-sm btn-secondary" title="Move down" style="padding:2px 7px;" onclick="lsMoveHeroImage(${i},1)" ${i===imgs.length-1?'disabled':''}>↓</button>
+                        <button class="btn btn-sm btn-danger" title="Remove" style="padding:2px 7px;" onclick="lsRemoveHeroImage(${i})">×</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        async function lsPersistHeroImages(imgs) {
+            // re-number sortOrder; for S3-keyed images let imageUrl be re-signed on read
+            // (don't persist transient blob: preview URLs)
+            const backgroundImages = imgs.map((im, i) => ({
+                imageUrl: im.s3Key ? '' : (im.imageUrl || ''),
+                s3Key: im.s3Key || '',
+                caption: im.caption || '', altText: im.altText || '', sortOrder: i
+            }));
+            const r = await lsFetch(`${LS_API}/content/hero`, { method: 'PUT', body: JSON.stringify({ backgroundImages }) });
+            if (!r.success) { showToast(r.error || 'Save failed', 'error'); return false; }
+            // Re-fetch so previews use freshly-signed URLs
+            const c = await lsFetch(`${LS_API}/content`);
+            if (c.success) { lsSingletonData = c.data; lsRenderHeroImages(); }
+            return true;
+        }
+
+        async function lsAddHeroImage(inputEl) {
+            const file = inputEl.files && inputEl.files[0];
+            if (!file) return;
+            showToast('Uploading image…', 'info');
+            const key = await lsUploadImage(file, 'hero');
+            inputEl.value = '';
+            if (!key) return;
+            const imgs = [...(lsSingletonData?.hero?.backgroundImages || [])];
+            imgs.push({ s3Key: key, imageUrl: URL.createObjectURL(file), altText: '' });
+            if (await lsPersistHeroImages(imgs)) showToast('Image added', 'success');
+        }
+
+        async function lsRemoveHeroImage(idx) {
+            if (!confirm('Remove this hero image?')) return;
+            const imgs = [...(lsSingletonData?.hero?.backgroundImages || [])];
+            imgs.splice(idx, 1);
+            if (await lsPersistHeroImages(imgs)) showToast('Removed', 'success');
+        }
+
+        async function lsMoveHeroImage(idx, dir) {
+            const imgs = [...(lsSingletonData?.hero?.backgroundImages || [])];
+            const j = idx + dir;
+            if (j < 0 || j >= imgs.length) return;
+            [imgs[idx], imgs[j]] = [imgs[j], imgs[idx]];
+            await lsPersistHeroImages(imgs);
         }
 
         // Approach cards (stored in approach.cards[] of the singleton)
