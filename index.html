@@ -3768,6 +3768,8 @@
                     <button class="btn btn-primary ls-tab active" data-lstab="services">Services</button>
                     <button class="btn btn-secondary ls-tab" data-lstab="portfolio">Portfolio</button>
                     <button class="btn btn-secondary ls-tab" data-lstab="testimonials">Testimonials</button>
+                    <button class="btn btn-secondary ls-tab" data-lstab="portal">Customer Portal</button>
+                    <button class="btn btn-secondary ls-tab" data-lstab="blogs">Blog</button>
                     <button class="btn btn-secondary ls-tab" data-lstab="events">Event Galleries</button>
                     <button class="btn btn-secondary ls-tab" data-lstab="bookings">Bookings</button>
                     <button class="btn btn-secondary ls-tab" data-lstab="pricing">Pricing</button>
@@ -3808,6 +3810,57 @@
                         </div>
                     </div>
                     <div id="lsTestimonialsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:16px;"></div>
+                </div>
+
+                <!-- Customer Portal -->
+                <div class="ls-content" id="ls-portal">
+                    <div class="table-header">
+                        <h2>Customer Portal Gallery</h2>
+                        <div class="search-box">
+                            <button class="btn btn-secondary btn-sm" id="refreshPortalBtn" onclick="lsLoadContent()" title="Refresh">🔄 Refresh</button>
+                            <button class="btn btn-primary btn-sm" onclick="lsOpenAddPortal()">+ Add Gallery</button>
+                        </div>
+                    </div>
+                    <p style="color:#888;font-size:13px;margin-top:8px;">Each tile shows an image and a name on the public Customer Portal page. Clicking a tile opens its link in a new tab.</p>
+
+                    <!-- Page settings: banner + heading copy -->
+                    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:16px;margin-top:16px;">
+                        <h3 style="font-size:15px;margin-bottom:12px;">Portal Page Banner &amp; Heading</h3>
+                        <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;">
+                            <div class="form-group" style="margin:0;">
+                                <label>Banner Image</label>
+                                <input type="hidden" id="lsPortalBannerUrl">
+                                <input type="hidden" id="lsPortalBannerKey">
+                                <div style="display:flex;flex-direction:column;gap:8px;">
+                                    <img id="lsPortalBannerPreview" src="" style="display:none;width:220px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #2a2a2a;">
+                                    <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;width:fit-content;">
+                                        Upload Banner
+                                        <input type="file" accept="image/*" style="display:none;" onchange="lsUploadSingle(this,'lsPortalBannerKey','lsPortalBannerPreview','portal-banner','lsPortalBannerUrl')">
+                                    </label>
+                                </div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:10px;">
+                                <div class="form-group" style="margin:0;"><label>Label (small caps)</label><input type="text" id="lsPortalSecLabel" placeholder="Client Area"></div>
+                                <div class="form-group" style="margin:0;"><label>Title</label><input type="text" id="lsPortalSecTitle" placeholder="Customer Portal"></div>
+                                <div class="form-group" style="margin:0;"><label>Subtitle</label><input type="text" id="lsPortalSecSubtitle" placeholder="Select your gallery below to view and download your images."></div>
+                            </div>
+                        </div>
+                        <div style="margin-top:12px;"><button class="btn btn-primary btn-sm" onclick="lsSavePortalSettings()">Save Page Settings</button></div>
+                    </div>
+
+                    <div id="lsPortalGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:16px;"></div>
+                </div>
+
+                <!-- Blog -->
+                <div class="ls-content" id="ls-blogs">
+                    <div class="table-header">
+                        <h2>Lifestyle Blog Posts</h2>
+                        <div class="search-box">
+                            <button class="btn btn-secondary btn-sm" onclick="loadLifestyleBlogs()" title="Refresh">🔄 Refresh</button>
+                            <button class="btn btn-primary btn-sm" onclick="openAddLifestyleBlogModal()">+ New Post</button>
+                        </div>
+                    </div>
+                    <div class="archive-entries-grid" id="lsBlogsGrid" style="margin-top:16px;"></div>
                 </div>
 
                 <!-- Events -->
@@ -5417,6 +5470,47 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="lsCloseModal('lsPortfolioModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lifestyle: Add Customer Portal Gallery Modal -->
+    <div class="modal-overlay" id="lsPortalModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="lsPortalModalTitle">Add Gallery</h2>
+                <button class="modal-close" onclick="lsCloseModal('lsPortalModal')">&times;</button>
+            </div>
+            <form id="lsPortalForm" onsubmit="lsSavePortal(event)">
+                <input type="hidden" id="lsPortalId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Image *</label>
+                        <input type="hidden" id="lsPortalUrl">
+                        <input type="hidden" id="lsPortalKey">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <img id="lsPortalPreview" src="" style="display:none;width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #e0e0e0;">
+                            <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
+                                Upload Image
+                                <input type="file" accept="image/*" style="display:none;" onchange="lsUploadSingle(this,'lsPortalKey','lsPortalPreview','portal','lsPortalUrl')">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Name *</label><input type="text" id="lsPortalTitle" placeholder="e.g. Smith Family — June 2026" required></div>
+                    <div class="form-group"><label>Link (opens in new tab on click)</label><input type="url" id="lsPortalLink" placeholder="https://..."></div>
+                    <div class="form-group"><label>Layout</label>
+                        <select id="lsPortalLayout">
+                            <option value="">Normal</option>
+                            <option value="mosaic-tall">Tall</option>
+                            <option value="mosaic-wide">Wide</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Sort Order</label><input type="number" id="lsPortalSort" value="0"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="lsCloseModal('lsPortalModal')">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </form>
@@ -10214,6 +10308,8 @@
         // ==========================================
         
         let currentBlogs = [];
+        let currentLifestyleBlogs = [];
+        let blogContext = 'wedding'; // 'wedding' | 'lifestyle' — which pool the modal is editing
         let blogCoverFile = null;
         let editingBlogId = null;
         let existingBlogCoverS3Key = null;
@@ -10279,13 +10375,16 @@
             }).join('');
         }
 
-        function openAddBlogModal() {
+        function openAddLifestyleBlogModal() { openAddBlogModal('lifestyle'); }
+
+        function openAddBlogModal(context = 'wedding') {
+            blogContext = context;
             editingBlogId = null;
             blogCoverFile = null;
             existingBlogCoverS3Key = null;
             blogInlineImages = [];
             blogInlineMarkerSeq = 0;
-            document.getElementById('blogModalTitle').textContent = 'New Blog Post';
+            document.getElementById('blogModalTitle').textContent = context === 'lifestyle' ? 'New Lifestyle Blog Post' : 'New Blog Post';
             document.getElementById('blogSubmitBtn').textContent = 'Create Post';
             document.getElementById('blogForm').reset();
             document.getElementById('blogAuthor').value = 'Heston Photo Team';
@@ -10295,10 +10394,11 @@
             document.getElementById('blogModal').classList.add('active');
         }
 
-        async function openEditBlogModal(blogId) {
+        async function openEditBlogModal(blogId, context = 'wedding') {
+            blogContext = context;
             editingBlogId = blogId;
             blogCoverFile = null;
-            document.getElementById('blogModalTitle').textContent = 'Edit Blog Post';
+            document.getElementById('blogModalTitle').textContent = context === 'lifestyle' ? 'Edit Lifestyle Blog Post' : 'Edit Blog Post';
             document.getElementById('blogSubmitBtn').textContent = 'Save Changes';
 
             try {
@@ -10518,6 +10618,7 @@
                     content: document.getElementById('blogContent').value,
                     inlineImages,
                     tags,
+                    site: blogContext,
                     isPublished: document.getElementById('blogPublished').checked
                 };
 
@@ -10539,7 +10640,7 @@
                 if (result.success) {
                     showToast(editingBlogId ? 'Blog updated!' : 'Blog created!', 'success');
                     closeBlogModal();
-                    loadBlogs();
+                    blogContext === 'lifestyle' ? loadLifestyleBlogs() : loadBlogs();
                 } else {
                     throw new Error(result.error || 'Failed to save');
                 }
@@ -10551,19 +10652,76 @@
             }
         }
 
-        async function deleteBlog(blogId) {
+        async function deleteBlog(blogId, context = 'wedding') {
             if (!confirm('Delete this blog post? This cannot be undone.')) return;
             try {
                 const result = await apiCall(`/blogs/${blogId}`, 'DELETE');
                 if (result.success) {
                     showToast('Blog deleted', 'success');
-                    loadBlogs();
+                    context === 'lifestyle' ? loadLifestyleBlogs() : loadBlogs();
                 } else {
                     throw new Error(result.error || 'Failed to delete');
                 }
             } catch (error) {
                 showToast('Error: ' + error.message, 'error');
             }
+        }
+
+        // ---- Lifestyle blog list (reuses the shared blog modal, scoped site=lifestyle) ----
+        async function loadLifestyleBlogs() {
+            const grid = document.getElementById('lsBlogsGrid');
+            if (!grid) return;
+            grid.innerHTML = '<div class="archive-empty"><p>Loading…</p></div>';
+            try {
+                const result = await apiCall('/blogs?site=lifestyle');
+                if (result.success) {
+                    currentLifestyleBlogs = result.data || [];
+                    renderLifestyleBlogsGrid();
+                } else {
+                    throw new Error(result.error || 'Failed to load');
+                }
+            } catch (error) {
+                grid.innerHTML = '<div class="archive-empty"><p>Error loading blogs</p></div>';
+                showToast('Error loading lifestyle blogs: ' + error.message, 'error');
+            }
+        }
+
+        function renderLifestyleBlogsGrid() {
+            const grid = document.getElementById('lsBlogsGrid');
+            if (!currentLifestyleBlogs || currentLifestyleBlogs.length === 0) {
+                grid.innerHTML = `
+                    <div class="archive-empty" style="grid-column:1/-1;">
+                        <p style="color: var(--text-muted); margin-top: 12px;">No lifestyle blog posts yet</p>
+                        <button class="btn btn-secondary btn-sm" style="margin-top: 12px;" onclick="openAddLifestyleBlogModal()">+ Create First Post</button>
+                    </div>`;
+                return;
+            }
+            grid.innerHTML = currentLifestyleBlogs.map(blog => {
+                const date = blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Draft';
+                const coverImg = blog.coverImageUrl || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600&h=400&fit=crop';
+                return `
+                <div class="archive-entry-card">
+                    <div class="archive-entry-cover">
+                        <img src="${coverImg}" alt="${blog.title}" loading="lazy">
+                        <div class="archive-entry-cover-overlay"></div>
+                        <span class="archive-entry-badge">${blog.category || 'Blog'}</span>
+                        <span class="archive-entry-status ${blog.isPublished ? 'active' : 'inactive'}">${blog.isPublished ? 'Published' : 'Draft'}</span>
+                    </div>
+                    <div class="archive-entry-info">
+                        <h3 class="archive-entry-couple" style="font-size: 14px;">${blog.title}</h3>
+                        <p class="archive-entry-place">${blog.author || 'Heston Photo Team'} &bull; ${date}</p>
+                        ${blog.excerpt ? `<p class="archive-entry-place" style="margin-top: 4px; -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;">${blog.excerpt}</p>` : ''}
+                    </div>
+                    <div class="archive-entry-actions">
+                        <button class="btn-edit" onclick="openEditBlogModal('${blog._id}', 'lifestyle')" title="Edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                        <button class="btn-delete" onclick="deleteBlog('${blog._id}', 'lifestyle')" title="Delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
         // App bar logout handler
@@ -11978,7 +12136,8 @@
 
         function lsLoadSection() { lsLoadTab('services'); }
         function lsLoadTab(tab) {
-            if (tab === 'services' || tab === 'portfolio' || tab === 'testimonials') return lsLoadContent();
+            if (tab === 'services' || tab === 'portfolio' || tab === 'testimonials' || tab === 'portal') return lsLoadContent();
+            if (tab === 'blogs') return loadLifestyleBlogs();
             if (tab === 'events') return lsLoadEvents();
             if (tab === 'bookings') return lsLoadBookings();
             if (tab === 'pricing') return lsLoadPricing();
@@ -11993,6 +12152,7 @@
             lsRenderServices();
             lsRenderPortfolio();
             lsRenderTestimonials();
+            lsRenderCustomerPortal();
         }
 
         function lsRenderServices() {
@@ -12273,6 +12433,95 @@
         async function lsDeletePortfolio(id) {
             if (!confirm('Delete this image?')) return;
             const r = await lsFetch(`${LS_API}/content/portfolio/entry/${id}`, { method: 'DELETE' });
+            if (r.success) { showToast('Deleted', 'success'); lsLoadContent(); }
+        }
+
+        // ----- Customer Portal -----
+        function lsRenderCustomerPortal() {
+            lsRenderPortalSettings();
+            const grid = document.getElementById('lsPortalGrid');
+            if (!grid) return;
+            const entries = (_lsContent?.customerPortal?.entries || []);
+            if (!entries.length) { grid.innerHTML = '<div style="grid-column:1/-1;color:#888;padding:24px;text-align:center;">No galleries yet</div>'; return; }
+            grid.innerHTML = entries.map(p => `
+                <div style="position:relative;border-radius:6px;overflow:hidden;background:#1a1a1a;border:1px solid #2a2a2a;">
+                    ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;height:150px;object-fit:cover;">` : '<div style="height:150px;background:#2a2a2a;"></div>'}
+                    <div style="padding:8px;">
+                        <div style="font-weight:600;font-size:13px;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title || '(no name)'}</div>
+                        <div style="font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.linkUrl ? '🔗 '+p.linkUrl : 'No link'}</div>
+                        <div style="display:flex;gap:6px;margin-top:8px;">
+                            <button class="btn btn-sm btn-secondary" onclick='lsEditPortal(${JSON.stringify(p).replace(/'/g, "&apos;")})'>Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="lsDeletePortal('${p._id}')">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        function lsRenderPortalSettings() {
+            const cp = _lsContent?.customerPortal || {};
+            document.getElementById('lsPortalSecLabel').value = cp.sectionLabel || '';
+            document.getElementById('lsPortalSecTitle').value = cp.sectionTitle || '';
+            document.getElementById('lsPortalSecSubtitle').value = cp.sectionSubtitle || '';
+            document.getElementById('lsPortalBannerUrl').value = cp.bannerImageUrl || '';
+            document.getElementById('lsPortalBannerKey').value = cp.bannerImageS3Key || '';
+            lsSetPreview('lsPortalBannerPreview', cp.bannerImageUrl || '');
+        }
+        async function lsSavePortalSettings() {
+            const body = {
+                sectionLabel: document.getElementById('lsPortalSecLabel').value.trim(),
+                sectionTitle: document.getElementById('lsPortalSecTitle').value.trim(),
+                sectionSubtitle: document.getElementById('lsPortalSecSubtitle').value.trim(),
+                bannerImageUrl: document.getElementById('lsPortalBannerUrl').value.trim(),
+                bannerImageS3Key: document.getElementById('lsPortalBannerKey').value.trim()
+            };
+            const r = await lsFetch(`${LS_API}/content/customerPortal`, { method: 'PUT', body: JSON.stringify(body) });
+            if (r.success) { showToast('Page settings saved', 'success'); lsLoadContent(); }
+            else showToast(r.error || 'Failed', 'error');
+        }
+        function lsOpenAddPortal() {
+            document.getElementById('lsPortalForm').reset();
+            document.getElementById('lsPortalId').value = '';
+            document.getElementById('lsPortalUrl').value = '';
+            document.getElementById('lsPortalKey').value = '';
+            document.getElementById('lsPortalModalTitle').textContent = 'Add Gallery';
+            lsSetPreview('lsPortalPreview', '');
+            lsOpenModal('lsPortalModal');
+        }
+        function lsEditPortal(p) {
+            document.getElementById('lsPortalForm').reset();
+            document.getElementById('lsPortalId').value = p._id;
+            document.getElementById('lsPortalTitle').value = p.title || '';
+            document.getElementById('lsPortalLink').value = p.linkUrl || '';
+            document.getElementById('lsPortalLayout').value = p.layoutClass || '';
+            document.getElementById('lsPortalSort').value = p.sortOrder || 0;
+            document.getElementById('lsPortalUrl').value = p.imageUrl || '';
+            document.getElementById('lsPortalKey').value = p.s3Key || '';
+            document.getElementById('lsPortalModalTitle').textContent = 'Edit Gallery';
+            lsSetPreview('lsPortalPreview', p.imageUrl || '');
+            lsOpenModal('lsPortalModal');
+        }
+        async function lsSavePortal(e) {
+            e.preventDefault();
+            const id = document.getElementById('lsPortalId').value;
+            if (!document.getElementById('lsPortalKey').value.trim() && !document.getElementById('lsPortalUrl').value.trim()) {
+                return showToast('Please upload an image first', 'error');
+            }
+            const body = {
+                title: document.getElementById('lsPortalTitle').value.trim(),
+                linkUrl: document.getElementById('lsPortalLink').value.trim(),
+                imageUrl: document.getElementById('lsPortalUrl').value.trim(),
+                s3Key: document.getElementById('lsPortalKey').value.trim(),
+                layoutClass: document.getElementById('lsPortalLayout').value,
+                sortOrder: parseInt(document.getElementById('lsPortalSort').value) || 0
+            };
+            const url = id ? `${LS_API}/content/portal/entry/${id}` : `${LS_API}/content/portal/entry`;
+            const r = await lsFetch(url, { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+            if (r.success) { showToast('Saved', 'success'); lsCloseModal('lsPortalModal'); lsLoadContent(); }
+            else showToast(r.error || 'Failed', 'error');
+        }
+        async function lsDeletePortal(id) {
+            if (!confirm('Delete this gallery tile?')) return;
+            const r = await lsFetch(`${LS_API}/content/portal/entry/${id}`, { method: 'DELETE' });
             if (r.success) { showToast('Deleted', 'success'); lsLoadContent(); }
         }
 
