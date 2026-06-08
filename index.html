@@ -5843,8 +5843,14 @@
                         <textarea id="blogExcerpt" rows="2" placeholder="A brief summary of the blog post..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Content <span style="color: var(--text-muted); font-size: 11px;">(Supports HTML)</span></label>
-                        <textarea id="blogContent" rows="12" placeholder="Write your blog post content here... You can use HTML tags for formatting." style="font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6;"></textarea>
+                        <label>Content <span style="color: var(--text-muted); font-size: 11px;">(Supports HTML &middot; use the <code>[[image:N]]</code> tokens below to place in-article images)</span></label>
+                        <textarea id="blogContent" rows="12" placeholder="Write your blog post content here... You can use HTML tags for formatting.&#10;&#10;Place an in-article image by putting its token on its own line, e.g.&#10;[[image:1]]" style="font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>In-Article Images <span style="color: var(--text-muted); font-size: 11px;">(Insert a token where you want each image to appear between paragraphs)</span></label>
+                        <div id="blogInlineImagesList" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;"></div>
+                        <input type="file" id="blogInlineFile" accept="image/*" onchange="handleBlogInlineSelect(event)" style="display: none;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('blogInlineFile').click()" style="width: 100%;">+ Add In-Article Image</button>
                     </div>
                     <div class="form-group">
                         <label>Tags <span style="color: var(--text-muted); font-size: 11px;">(Comma-separated)</span></label>
@@ -10211,6 +10217,9 @@
         let blogCoverFile = null;
         let editingBlogId = null;
         let existingBlogCoverS3Key = null;
+        // In-article images: { marker, file (new upload) | null, imageUrl, s3Key, caption, altText }
+        let blogInlineImages = [];
+        let blogInlineMarkerSeq = 0;
 
         async function loadBlogs() {
             const grid = document.getElementById('blogsGrid');
@@ -10274,12 +10283,15 @@
             editingBlogId = null;
             blogCoverFile = null;
             existingBlogCoverS3Key = null;
+            blogInlineImages = [];
+            blogInlineMarkerSeq = 0;
             document.getElementById('blogModalTitle').textContent = 'New Blog Post';
             document.getElementById('blogSubmitBtn').textContent = 'Create Post';
             document.getElementById('blogForm').reset();
             document.getElementById('blogAuthor').value = 'Heston Photo Team';
             document.getElementById('blogCoverPreview').style.display = 'none';
             document.getElementById('blogCoverPickBtn').style.display = '';
+            renderBlogInlineImages();
             document.getElementById('blogModal').classList.add('active');
         }
 
@@ -10303,6 +10315,17 @@
                 document.getElementById('blogPublished').checked = blog.isPublished || false;
 
                 existingBlogCoverS3Key = blog.coverImageS3Key || null;
+
+                blogInlineImages = (blog.inlineImages || []).map(img => ({
+                    marker: img.marker,
+                    file: null,
+                    imageUrl: img.imageUrl || '',
+                    s3Key: img.s3Key || '',
+                    caption: img.caption || '',
+                    altText: img.altText || ''
+                }));
+                blogInlineMarkerSeq = blogInlineImages.reduce((max, img) => Math.max(max, img.marker), 0);
+                renderBlogInlineImages();
 
                 if (blog.coverImageUrl) {
                     document.getElementById('blogCoverPreviewImg').src = blog.coverImageUrl;
@@ -10344,6 +10367,70 @@
             document.getElementById('blogCoverFile').value = '';
         }
 
+        // ---- In-article (inline) images ----
+        function handleBlogInlineSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const marker = ++blogInlineMarkerSeq;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                blogInlineImages.push({ marker, file, imageUrl: e.target.result, s3Key: '', caption: '', altText: '' });
+                renderBlogInlineImages();
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function renderBlogInlineImages() {
+            const list = document.getElementById('blogInlineImagesList');
+            if (!list) return;
+            if (blogInlineImages.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-muted); font-size: 12px; margin: 0;">No in-article images yet. Add one, then insert its token into the content.</p>';
+                return;
+            }
+            list.innerHTML = blogInlineImages.map((img, i) => `
+                <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                    <img src="${img.imageUrl}" style="width: 64px; height: 64px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
+                    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <code style="background: var(--bg-subtle, rgba(0,0,0,0.06)); padding: 2px 6px; border-radius: 4px; font-size: 12px;">[[image:${img.marker}]]</code>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="insertBlogInlineToken(${img.marker})">Insert into content</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="removeBlogInlineImage(${i})" style="color: var(--danger);">Remove</button>
+                        </div>
+                        <input type="text" value="${(img.caption || '').replace(/"/g, '&quot;')}" oninput="blogInlineImages[${i}].caption = this.value" placeholder="Caption (optional)" style="font-size: 12px;">
+                        <input type="text" value="${(img.altText || '').replace(/"/g, '&quot;')}" oninput="blogInlineImages[${i}].altText = this.value" placeholder="Alt text (for SEO/accessibility)" style="font-size: 12px;">
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function insertBlogInlineToken(marker) {
+            const ta = document.getElementById('blogContent');
+            const token = `\n[[image:${marker}]]\n`;
+            const start = ta.selectionStart ?? ta.value.length;
+            const end = ta.selectionEnd ?? ta.value.length;
+            ta.value = ta.value.slice(0, start) + token + ta.value.slice(end);
+            const pos = start + token.length;
+            ta.focus();
+            ta.setSelectionRange(pos, pos);
+        }
+
+        function removeBlogInlineImage(index) {
+            const img = blogInlineImages[index];
+            if (img) {
+                // Strip the matching [[image:N]] token (and a surrounding blank line) from the content
+                const ta = document.getElementById('blogContent');
+                const tokenRe = new RegExp(`[ \\t]*\\[\\[image:${img.marker}\\]\\][ \\t]*\\n?`, 'g');
+                const before = ta.value;
+                ta.value = before.replace(tokenRe, '');
+                if (ta.value !== before) {
+                    showToast(`Removed image and its [[image:${img.marker}]] token from the content.`, 'success');
+                }
+            }
+            blogInlineImages.splice(index, 1);
+            renderBlogInlineImages();
+        }
+
         async function saveBlog(event) {
             event.preventDefault();
             const submitBtn = document.getElementById('blogSubmitBtn');
@@ -10382,6 +10469,44 @@
                     coverImageS3Key = signedData.key;
                 }
 
+                // Upload any newly added in-article images, keep already-uploaded ones as-is
+                const inlineImages = [];
+                for (const img of blogInlineImages) {
+                    let imageUrl = img.imageUrl;
+                    let s3Key = img.s3Key;
+                    if (img.file) {
+                        const compressed = await compressImage(img.file, 1200, 0.85);
+                        const signedRes = await fetch(`${BACKEND_URL}/api/admin/s3/upload-url`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                            body: JSON.stringify({
+                                folder: 'website',
+                                filename: img.file.name,
+                                mimeType: compressed.type,
+                                fileSize: compressed.size,
+                                prefix: 'blogs'
+                            })
+                        });
+                        const signedData = await signedRes.json();
+                        if (!signedData.success) throw new Error(signedData.error || 'Failed to get upload URL');
+                        const uploadRes = await fetch(signedData.uploadUrl, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': compressed.type },
+                            body: compressed
+                        });
+                        if (!uploadRes.ok) throw new Error('Failed to upload in-article image');
+                        imageUrl = `https://${signedData.bucket}.s3.${signedData.region}.amazonaws.com/${signedData.key}`;
+                        s3Key = signedData.key;
+                    }
+                    inlineImages.push({
+                        marker: img.marker,
+                        imageUrl,
+                        s3Key,
+                        caption: img.caption || '',
+                        altText: img.altText || ''
+                    });
+                }
+
                 const tagsStr = document.getElementById('blogTags').value;
                 const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
 
@@ -10391,6 +10516,7 @@
                     author: document.getElementById('blogAuthor').value.trim() || 'Heston Photo Team',
                     excerpt: document.getElementById('blogExcerpt').value.trim(),
                     content: document.getElementById('blogContent').value,
+                    inlineImages,
                     tags,
                     isPublished: document.getElementById('blogPublished').checked
                 };
