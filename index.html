@@ -4182,6 +4182,10 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         Archives
                     </button>
+                    <button class="offerings-tab" data-wstab="gallery">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
+                        Gallery
+                    </button>
                     <button class="offerings-tab" data-wstab="whyChooseUs">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         Why Choose Us
@@ -4316,6 +4320,49 @@
                                 Drag &amp; drop cards to reorder
                             </p>
                             <div class="archive-entries-grid" id="archiveEntriesGrid">
+                                <div class="loading"><div class="spinner"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gallery Content (standalone mosaic gallery) -->
+                <div class="offerings-content" id="galleryContent">
+                    <div class="table-container" style="border-radius: 0 0 14px 14px; border-top: none;">
+                        <div class="table-header">
+                            <h2>Mosaic Gallery</h2>
+                            <div class="search-box">
+                                <button class="btn btn-secondary btn-sm" id="refreshGalleryBtn" onclick="loadGallery()" title="Refresh">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        <div style="padding: 20px;">
+                            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">These images appear in the mosaic gallery section (Gallery tab) on the landing page. Images are auto-compressed on upload.</p>
+
+                            <!-- Bulk upload dropzone -->
+                            <div id="galleryDropzone" class="upload-dropzone" onclick="document.getElementById('galleryFileInput').click()" style="min-height:140px;margin-bottom:16px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="var(--gold)" width="36" height="36"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                                <p>Click to select images (multiple allowed)</p>
+                                <input type="file" id="galleryFileInput" accept="image/*" multiple onchange="handleGalleryFilesSelect(event)" style="display:none;">
+                            </div>
+
+                            <!-- Selected files staging + upload button -->
+                            <div id="gallerySelectedWrap" style="display:none;margin-bottom:20px;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                    <span id="gallerySelectedCount" style="font-size:13px;color:var(--text-light);font-weight:600;"></span>
+                                    <div style="display:flex;gap:8px;">
+                                        <button class="btn btn-secondary btn-sm" onclick="clearGallerySelection()">Clear</button>
+                                        <button class="btn btn-primary btn-sm" id="galleryUploadBtn" onclick="uploadGalleryPhotos()">Upload All</button>
+                                    </div>
+                                </div>
+                                <div class="film-roll-grid" id="gallerySelectedGrid"></div>
+                                <p id="galleryUploadProgress" style="display:none;font-size:13px;color:var(--gold);margin-top:10px;"></p>
+                            </div>
+
+                            <p class="film-roll-reorder-hint">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                                Drag &amp; drop images to reorder
+                            </p>
+                            <div class="film-roll-grid" id="galleryPhotosGrid">
                                 <div class="loading"><div class="spinner"></div></div>
                             </div>
                         </div>
@@ -6318,6 +6365,7 @@
             switch(subtab) {
                 case 'hero': loadWebsiteHero(); break;
                 case 'archives': loadWebsiteArchives(); break;
+                case 'gallery': loadGallery(); break;
                 case 'preWeddingShoot': loadWebsitePreWeddingShoot(); break;
                 case 'weddingPhotography': loadWebsiteWeddingPhotography(); break;
                 case 'wsServices': loadWebsiteServices(); break;
@@ -6811,6 +6859,281 @@
                             const img = currentFilmRollImages.find(i => i._id === id);
                             if (img) img.sortOrder = index;
                         });
+                        showToast('Order saved', 'success');
+                    } else {
+                        showToast('Failed to save order', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error saving order: ' + err.message, 'error');
+                }
+            }, 600);
+        }
+
+        // ==========================================
+        // Website Controls - Gallery (mosaic gallery)
+        // ==========================================
+        let galleryPhotos = [];
+        let gallerySelectedFiles = [];
+
+        async function loadGallery() {
+            const grid = document.getElementById('galleryPhotosGrid');
+            grid.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            try {
+                const result = await apiCall('/website-content/gallery', 'GET');
+                galleryPhotos = (result.data && result.data.gallery && result.data.gallery.images) || [];
+                renderGalleryPhotosGrid();
+            } catch (error) {
+                grid.innerHTML = '';
+                showToast('Error loading gallery: ' + error.message, 'error');
+            }
+        }
+
+        function renderGalleryPhotosGrid() {
+            const grid = document.getElementById('galleryPhotosGrid');
+            if (!galleryPhotos || galleryPhotos.length === 0) {
+                grid.innerHTML = `
+                    <div class="film-roll-empty">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="48" height="48">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p style="color: var(--text-muted); margin-top: 12px;">No gallery images yet. Use the upload box above to add some.</p>
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = galleryPhotos
+                .slice()
+                .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+                .map((img, idx) => `
+                    <div class="film-roll-item" draggable="true" data-id="${img._id}">
+                        <img src="${img.imageUrl}" alt="${img.caption || 'Gallery'}" loading="lazy">
+                        <div class="film-roll-drag-handle">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" /></svg>
+                        </div>
+                        <div class="film-roll-item-overlay">
+                            <span class="film-roll-item-caption">${img.caption || ''}</span>
+                            <div class="film-roll-item-actions">
+                                <button class="btn-delete" ondragstart="event.stopPropagation()" onclick="deleteGalleryPhotoItem('${img._id}')" title="Delete">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <span class="film-roll-item-order">#${idx + 1}</span>
+                    </div>
+                `).join('');
+
+            initGalleryDragDrop();
+        }
+
+        function handleGalleryFilesSelect(event) {
+            const files = Array.from(event.target.files || []);
+            if (!files.length) return;
+            gallerySelectedFiles = gallerySelectedFiles.concat(files);
+            event.target.value = ''; // allow re-selecting same files
+            renderGallerySelected();
+        }
+
+        function renderGallerySelected() {
+            const wrap = document.getElementById('gallerySelectedWrap');
+            const grid = document.getElementById('gallerySelectedGrid');
+            const count = document.getElementById('gallerySelectedCount');
+
+            if (!gallerySelectedFiles.length) {
+                wrap.style.display = 'none';
+                grid.innerHTML = '';
+                return;
+            }
+
+            wrap.style.display = 'block';
+            count.textContent = `${gallerySelectedFiles.length} image${gallerySelectedFiles.length > 1 ? 's' : ''} selected`;
+
+            grid.innerHTML = gallerySelectedFiles.map((file, idx) => `
+                <div class="film-roll-item" data-idx="${idx}">
+                    <img src="${URL.createObjectURL(file)}" alt="preview" loading="lazy">
+                    <div class="film-roll-item-overlay">
+                        <div class="film-roll-item-actions">
+                            <button class="btn-delete" onclick="removeGallerySelected(${idx})" title="Remove">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removeGallerySelected(idx) {
+            gallerySelectedFiles.splice(idx, 1);
+            renderGallerySelected();
+        }
+
+        function clearGallerySelection() {
+            gallerySelectedFiles = [];
+            renderGallerySelected();
+        }
+
+        async function uploadGalleryPhotos() {
+            if (!gallerySelectedFiles.length) {
+                showToast('Please select images first', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('galleryUploadBtn');
+            const progress = document.getElementById('galleryUploadProgress');
+            btn.disabled = true;
+            progress.style.display = 'block';
+
+            const uploaded = [];
+            const total = gallerySelectedFiles.length;
+
+            try {
+                for (let i = 0; i < total; i++) {
+                    const file = gallerySelectedFiles[i];
+                    progress.textContent = `Uploading ${i + 1} of ${total}...`;
+
+                    const compressedFile = await compressImage(file, 1600, 0.85);
+
+                    const signedUrlResult = await fetch(`${BACKEND_URL}/api/admin/s3/upload-url`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({
+                            folder: 'website',
+                            filename: file.name,
+                            mimeType: compressedFile.type,
+                            fileSize: compressedFile.size,
+                            prefix: 'gallery'
+                        })
+                    });
+                    const signedUrlData = await signedUrlResult.json();
+                    if (!signedUrlData.success) throw new Error(signedUrlData.error || 'Failed to get upload URL');
+
+                    const uploadResponse = await fetch(signedUrlData.uploadUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': compressedFile.type },
+                        body: compressedFile
+                    });
+                    if (!uploadResponse.ok) throw new Error('Failed to upload image to S3');
+
+                    const imageUrl = `https://${signedUrlData.bucket}.s3.${signedUrlData.region}.amazonaws.com/${signedUrlData.key}`;
+                    uploaded.push({ imageUrl, s3Key: signedUrlData.key, caption: '' });
+                }
+
+                progress.textContent = 'Saving...';
+                const result = await apiCall('/website-content/gallery/photos', 'POST', { images: uploaded });
+                if (result.success) {
+                    galleryPhotos = (result.data && result.data.gallery && result.data.gallery.images) || [];
+                    clearGallerySelection();
+                    renderGalleryPhotosGrid();
+                    showToast(`${uploaded.length} image${uploaded.length > 1 ? 's' : ''} added to gallery`, 'success');
+                } else {
+                    throw new Error(result.error || 'Failed to save images');
+                }
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                progress.style.display = 'none';
+                progress.textContent = '';
+            }
+        }
+
+        async function deleteGalleryPhotoItem(imageId) {
+            if (!confirm('Delete this gallery image?')) return;
+            try {
+                const result = await apiCall(`/website-content/gallery/photo/${imageId}`, 'DELETE');
+                if (result.success) {
+                    galleryPhotos = (result.data && result.data.gallery && result.data.gallery.images) || [];
+                    renderGalleryPhotosGrid();
+                    showToast('Image deleted', 'success');
+                } else {
+                    throw new Error(result.error || 'Failed to delete');
+                }
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        function initGalleryDragDrop() {
+            const grid = document.getElementById('galleryPhotosGrid');
+            const items = Array.from(grid.querySelectorAll('.film-roll-item[draggable]'));
+            let dragSrc = null;
+
+            function swapNodes(a, b) {
+                const parent = a.parentNode;
+                const aSibling = a.nextSibling === b ? a : a.nextSibling;
+                parent.insertBefore(a, b);
+                parent.insertBefore(b, aSibling);
+            }
+
+            function updateBadges() {
+                Array.from(grid.querySelectorAll('.film-roll-item[draggable]')).forEach((el, idx) => {
+                    const badge = el.querySelector('.film-roll-item-order');
+                    if (badge) badge.textContent = `#${idx + 1}`;
+                });
+            }
+
+            items.forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    dragSrc = item;
+                    requestAnimationFrame(() => item.classList.add('dragging'));
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', item.dataset.id);
+                });
+
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    grid.querySelectorAll('.film-roll-item').forEach(i => i.classList.remove('drag-over'));
+                    dragSrc = null;
+                });
+
+                item.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (item !== dragSrc) {
+                        grid.querySelectorAll('.film-roll-item').forEach(i => i.classList.remove('drag-over'));
+                        item.classList.add('drag-over');
+                    }
+                });
+
+                item.addEventListener('dragleave', (e) => {
+                    if (!item.contains(e.relatedTarget)) {
+                        item.classList.remove('drag-over');
+                    }
+                });
+
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (!dragSrc || dragSrc === item) return;
+                    item.classList.remove('drag-over');
+
+                    swapNodes(dragSrc, item);
+
+                    [dragSrc, item].forEach(el => {
+                        el.classList.remove('swap-flash');
+                        void el.offsetWidth;
+                        el.classList.add('swap-flash');
+                        el.addEventListener('animationend', () => el.classList.remove('swap-flash'), { once: true });
+                    });
+
+                    updateBadges();
+                    saveGalleryOrder();
+                });
+            });
+        }
+
+        let galleryReorderTimer = null;
+        async function saveGalleryOrder() {
+            clearTimeout(galleryReorderTimer);
+            galleryReorderTimer = setTimeout(async () => {
+                const grid = document.getElementById('galleryPhotosGrid');
+                const orderedIds = Array.from(grid.querySelectorAll('.film-roll-item[draggable]'))
+                    .map(el => el.dataset.id);
+                try {
+                    const result = await apiCall('/website-content/gallery/reorder', 'PUT', { orderedIds });
+                    if (result.success) {
+                        galleryPhotos = (result.data && result.data.gallery && result.data.gallery.images) || galleryPhotos;
                         showToast('Order saved', 'success');
                     } else {
                         showToast('Failed to save order', 'error');
