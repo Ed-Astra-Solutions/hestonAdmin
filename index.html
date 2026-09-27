@@ -6046,6 +6046,7 @@
         </div>
     </div>
 
+    <script src="recaptcha.js"></script>
     <script>
         // ============================================
         // Auto-detect: use localhost when running locally, production otherwise
@@ -6189,16 +6190,12 @@
             
             try {
                 errorDiv.style.display = 'none';
-                const response = await fetch(`${API_BASE}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+                const response = await HestonCaptcha.post(`${API_BASE}/login`, { email, password }, 'admin_login');
                 
                 const result = await response.json();
                 
                 if (!response.ok) {
-                    throw new Error(result.error || 'Login failed');
+                    throw new Error(result.message || result.error || 'Login failed');
                 }
                 
                 authToken = result.data.token;
